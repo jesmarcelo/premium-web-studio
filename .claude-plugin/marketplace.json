@@ -1,0 +1,27 @@
+{
+  "name": "premium-web-studio",
+  "owner": {
+    "name": "Marcelo Bom Jardim Villasanin",
+    "url": "https://github.com/jesmarcelo"
+  },
+  "metadata": {
+    "description": "Plugins do Claude Code para criar, melhorar e revisar websites profissionais e premium, em qualquer nicho e stack.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "premium-web-studio",
+      "source": "./plugins/premium-web-studio",
+      "description": "Ciclo completo de websites profissionais: discovery, auditoria, pesquisa de referências com Firecrawl, direção visual original, implementação, QA (acessibilidade, SEO, performance), revisão visual e entrega. Qualquer nicho, qualquer stack.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Marcelo Bom Jardim Villasanin"
+      },
+      "homepage": "https://github.com/jesmarcelo/premium-web-studio",
+      "repository": "https://github.com/jesmarcelo/premium-web-studio",
+      "license": "MIT",
+      "category": "design",
+      "keywords": ["website", "web-design", "ui", "ux", "frontend", "accessibility", "seo", "performance", "firecrawl", "redesign"]
+    }
+  ]
+}
