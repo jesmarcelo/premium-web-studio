@@ -106,7 +106,7 @@ Use uma lista de tarefas (todo list) para acompanhar as fases em projetos comple
 3. Ao fim de cada etapa: rode build/lint/tipos e confira visualmente quando possível.
 4. Corrija erros encontrados no caminho, inclusive os que você mesmo introduziu.
 5. Não deixe código morto, `console.log` de depuração, TODOs sem registro ou componentes duplicados.
-6. Configure minificação no build e gere a configuração de compressão e cache da hospedagem (ex.: `.htaccess` em Apache/LiteSpeed) conforme [references/server-config.md](references/server-config.md).
+6. Configure minificação no build e gere a configuração de compressão e cache da hospedagem (ex.: `.htaccess` em Apache/LiteSpeed) conforme [references/server-config.md](references/server-config.md), dentro da pasta que o build copia (ex.: `public/.htaccess`), e confirme que ele aparece na saída do build. Imagens com `srcset`/`sizes` desde o primeiro componente, e JS sem reflow forçado ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#reflow-forçado-layout-thrashing)).
 7. Se o usuário usa git, sugira commits por etapa; só faça commit se ele pedir.
 
 **Critério de saída:** escopo implementado, build passando.

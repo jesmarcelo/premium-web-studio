@@ -6,6 +6,20 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [1.0.1] - 2026-10-04
+
+### Adicionado
+
+- `scripts/perf-audit.py`: roda o Lighthouse em mobile e desktop e lista só as falhas de cache, imagens, reflow forçado, árvore de dependência de rede, LCP, CLS, fontes e bloqueio de renderização, com as URLs afetadas.
+- Regras e verificação de reflow forçado (layout thrashing) no JS do projeto.
+- Orientação sobre a árvore de dependência de rede: menos arquivos de fonte, `unicode-range`, beacons de CDN fora do caminho crítico.
+- Seção sobre CDN como proxy (ex.: Cloudflare): Browser Cache TTL em "Respect Existing Headers", purge após mudar o cache e desativação do beacon de RUM.
+
+### Corrigido
+
+- `.htaccess` gerado por padrão quando a hospedagem é desconhecida, criado na pasta que o build copia (ex.: `public/`) e conferido na saída do build; verificação de cache com `curl` em cada extensão servida (`webp`, `woff2` etc.).
+- Componentes de imagem do framework obrigatoriamente com `srcset`/`sizes` (ou `layout` responsivo no Astro): `width` sozinho gerava um único arquivo maior que o exibido. Inclui snippet que compara o arquivo entregue com o tamanho exibido × `devicePixelRatio`.
+
 ## [1.0.0] - 2026-10-02
 
 Primeira versão pública.
@@ -25,5 +39,6 @@ Primeira versão pública.
 - Comando `/premium-web-studio update` para verificar e aplicar atualizações a partir do GitHub.
 - Instalação pelo marketplace do Claude Code ou manualmente como Skill.
 
-[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.0...HEAD
+[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jesmarcelo/premium-web-studio/releases/tag/v1.0.0

@@ -144,7 +144,7 @@ plugins/premium-web-studio/
     ├── SECURITY.md                      # secrets, prompt injection, comandos
     ├── references/                      # perfis de nicho, stacks, Firecrawl, modelos
     ├── VERSION                          # versão da Skill (usada pelo comando update)
-    └── scripts/                         # diagnóstico do Firecrawl, auditoria de repositório e de SEO, update
+    └── scripts/                         # diagnóstico do Firecrawl, auditoria de repositório, SEO e performance, update
 ```
 
 ## Validar a instalação

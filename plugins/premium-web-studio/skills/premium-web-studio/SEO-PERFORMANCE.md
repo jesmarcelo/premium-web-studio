@@ -105,7 +105,25 @@ npx sharp-cli -i origem.png -o public/img/hero-1440.webp resize 1440 -- webp --q
 ```
 Mantenha o original fora da pasta pública (ex.: `assets-src/` ou `tmp/`) para poder regerar.
 
-**Componentes de imagem do framework** (`next/image`, `astro:assets`, `@nuxt/image` etc.) já redimensionam e convertem; nesse caso, o passo 1 continua obrigatório para escrever `sizes` correto, e confirme que o formato de saída inclui WebP/AVIF.
+**Original guardado, entrega recortada.** O arquivo original (em alta resolução) pode e deve ficar no projeto como fonte; o que nunca pode acontecer é o navegador baixar um arquivo maior que o exibido. O PageSpeed acusa "imagem maior do que precisa ser" quando o arquivo entregue passa do tamanho exibido × densidade de pixels do dispositivo, mesmo que seja só 1,5×.
+
+**Componentes de imagem do framework** (`next/image`, `astro:assets`, `@nuxt/image` etc.) já redimensionam e convertem, **mas só geram `srcset` quando configurados para isso**. Uma única `width` gera um único arquivo e nenhum `srcset`: todo dispositivo baixa a mesma imagem. Regras:
+
+- **Astro (`<Image>`/`<Picture>`):** use `layout="constrained"` (ou `full-width` para imagens de largura total), que gera `srcset` e `sizes` automaticamente (Astro 5.10+; em versões anteriores, `experimental.responsiveImages`); ou passe `widths={[...]}` **e** `sizes` explícitos. `width` sozinho não basta. Defina `quality` (~75–80) em vez de depender do padrão.
+- **Next (`next/image`):** `sizes` é obrigatório sempre que a imagem não tem largura fixa (com `fill` ou largura responsiva); sem ele, o navegador assume `100vw` e baixa a maior versão. Ajuste `quality` (~75).
+- **Nuxt (`<NuxtImg>`):** use `sizes` (ex.: `sizes="sm:100vw md:50vw lg:600px"`) e `densities="x1 x2"`.
+- **Qualquer framework:** o passo 1 continua obrigatório: o `sizes` precisa refletir a largura medida em cada breakpoint, não um chute. Confirme que o formato de saída inclui WebP/AVIF.
+
+**Verificação no navegador.** Com o build de produção aberto, rode no console (ou via Playwright `page.evaluate`) em 375 e 1440 px e corrija toda linha que aparecer:
+
+```js
+[...document.images].filter(i => i.currentSrc && i.getBoundingClientRect().width > 0).map(i => {
+  const need = Math.ceil(i.getBoundingClientRect().width * devicePixelRatio);
+  return { src: i.currentSrc.split('/').pop(), arquivo: i.naturalWidth, exibido: Math.round(i.getBoundingClientRect().width), necessario: need, sobra: (i.naturalWidth / need).toFixed(2) };
+}).filter(r => r.arquivo > r.necessario * 1.15)
+```
+
+`scripts/perf-audit.py` faz a mesma checagem a partir do Lighthouse, em mobile e desktop.
 
 **Exceções:** logos e ícones em SVG; `og:image` em JPG ou PNG (nem todo scraper de redes sociais lê WebP); favicons nos formatos próprios (ICO/PNG/SVG).
 
@@ -117,12 +135,25 @@ Mantenha o original fora da pasta pública (ex.: `assets-src/` ou `tmp/`) para p
 - `font-display: swap` (ou `optional` para fontes não essenciais).
 - `preload` apenas da fonte usada acima da dobra — no máximo 1–2 arquivos. Pré-carregar todas as variações compete com a imagem LCP pela banda e piora o LCP.
 - Métricas de fallback ajustadas (`size-adjust`, `ascent-override`) para reduzir CLS — `next/font` e Fontsource fazem isso.
+- **Poucos arquivos de fonte na primeira visita.** Cada arquivo é um nó na árvore de dependência de rede. Some os `.woff2` baixados na home: acima de 3–4, reduza (fonte variável no lugar de vários pesos, um peso a menos, itálico só se usado acima da dobra). Fontes de escrita secundária (outro alfabeto, uso pontual) levam `unicode-range` para só baixarem quando os caracteres aparecem.
 
 ### JavaScript
 - Envie o mínimo de JS: renderize no servidor/estático, hidrate apenas o interativo (ilhas, Server Components).
 - Code splitting por rota; `import()` dinâmico para componentes pesados abaixo da dobra (mapas, players, gráficos, carrosséis).
 - Evite bibliotecas pesadas para tarefas simples (ver [ENGINEERING.md](ENGINEERING.md#dependências)).
 - Quebre tarefas longas (> 50 ms) em interações; evite handlers síncronos pesados (INP).
+
+### Reflow forçado (layout thrashing)
+Acontece quando o JS lê uma propriedade de geometria logo depois de alterar estilo ou DOM, obrigando o navegador a recalcular o layout na hora. O PageSpeed lista em "Reflow forçado" com o arquivo e a linha. Regras para todo JS escrito no projeto:
+
+- **Leia tudo, depois escreva tudo.** Nunca alterne em loop `el.style.x = ...` com leituras de `offsetWidth/Height/Top`, `clientWidth/Height`, `scrollTop/Height`, `getBoundingClientRect()`, `getComputedStyle()`, `innerWidth`. Junte as leituras antes e aplique as escritas depois, de preferência dentro de `requestAnimationFrame`.
+- **Observers no lugar de medições em evento.** `IntersectionObserver` para revelar ao rolar, lazy load, header que muda e contadores; `ResizeObserver` para reagir a tamanho; `matchMedia` para breakpoints. Nada de `getBoundingClientRect()` dentro de `scroll`/`resize`.
+- **Animação em `transform`/`opacity`**, não em `top`, `left`, `width`, `height` ou `margin`.
+- **Medição inicial fora do caminho crítico:** cálculo de altura (acordeão, menu, marquee) só quando o componente é usado, ou com CSS (`grid-template-rows: 0fr → 1fr`, `interpolate-size`, `details`) para dispensar a medição.
+- **Bibliotecas de animação/scroll** (GSAP ScrollTrigger, Lenis, AOS, carrosséis) inicializadas depois do primeiro paint e só nas páginas que as usam.
+- Se o reflow vier de script de terceiro (analytics, chat, beacon da CDN), registre a origem e avalie adiar ou remover; não é corrigível no código do projeto.
+
+**Verificação:** Lighthouse ("Forced reflow"/"Reflow forçado" vazio, também listado por `scripts/perf-audit.py`) e, para detalhe, DevTools → Performance: blocos roxos "Layout" com aviso "Forced reflow" apontam a linha do código.
 - Analise o bundle (`vite-bundle-visualizer`, `@next/bundle-analyzer`, `rollup-plugin-visualizer`).
 
 ### Scripts de terceiros
@@ -139,10 +170,21 @@ Mantenha o original fora da pasta pública (ex.: `assets-src/` ou `tmp/`) para p
 ### Rede e cache
 - HTTP/2 ou HTTP/3, CDN quando possível.
 - **Obrigatório em toda entrega:** HTML, CSS e JS minificados no build; compressão Brotli com fallback gzip; cache de navegador de no mínimo 30 dias para imagens, fontes, CSS e JS (1 ano `immutable` para assets com hash); HTML com `no-cache`. Gere o arquivo de configuração da hospedagem real (`.htaccess` em Apache/LiteSpeed, `_headers`, `vercel.json`, Nginx) conforme [references/server-config.md](references/server-config.md).
-- `preconnect` apenas para origens críticas de terceiros (máximo 2–3).
+- `preconnect` apenas para origens críticas de terceiros (máximo 2–3). Se tudo vem da mesma origem, não há o que pré-conectar.
+
+### Árvore de dependência de rede (cadeias críticas)
+Cada recurso que só é descoberto depois de outro (HTML → CSS → fonte; HTML → script → requisição) soma latência ao caminho crítico. Para encurtar:
+
+- **Fontes:** preload apenas da 1–2 usadas no texto LCP/acima da dobra (com `crossorigin`), menos arquivos (ver Fontes) e `unicode-range` nas secundárias. Preload de todas piora o LCP.
+- **CSS:** inline o crítico ou mantenha um único arquivo pequeno; nada de `@import` encadeado.
+- **Imagem LCP** descoberta no HTML (não via CSS `background-image` nem JS), com `fetchpriority="high"`.
+- **Scripts de terceiros e beacons** fora do caminho crítico (adiados ou removidos). Beacons injetados pela CDN (RUM/Web Analytics) são desativados no painel dela, ver [references/server-config.md](references/server-config.md#proxy-de-cdn-na-frente-do-servidor-ex-cloudflare-com-nuvem-laranja).
+
+Esse diagnóstico não entra na nota do PageSpeed; use-o para orientar as melhorias acima, sem perseguir uma árvore "vazia": o próprio HTML e as fontes essenciais sempre aparecem.
 
 ### Como medir
 - **Auditoria de SEO on-page:** `python3 "${CLAUDE_SKILL_DIR}/scripts/seo-audit.py" <url-base>` percorre o sitemap e aponta títulos/descrições fora do limite ou duplicados, canonical errado, H1 ausente ou múltiplo, imagens sem `alt`, páginas com pouco texto, JSON-LD ausente ou inválido, `www`/HTTP sem redirect, favicon e `robots.txt`. Funciona em produção ou no `preview` local (passe `--sitemap` se a URL do sitemap for outra).
 - **Laboratório:** Lighthouse (`npx lighthouse <url> --view` ou DevTools) em modo mobile, contra o **build de produção** (`build` + `preview`/`start`), nunca contra o servidor de desenvolvimento.
+- **Auditoria de performance focada:** `python3 "${CLAUDE_SKILL_DIR}/scripts/perf-audit.py" <url>` roda o Lighthouse em mobile e desktop e lista só o que falhou em cache, imagens (tamanho, compressão, formato), reflow forçado, árvore de rede, LCP, CLS, fontes e bloqueio de renderização, com as URLs afetadas. Aceita `--report arquivo.json` para analisar um relatório já salvo. O item de cache só é válido contra o site publicado (o servidor de `preview` local não usa o `.htaccess`).
 - **Campo:** PageSpeed Insights / CrUX para sites já publicados com tráfego.
 - Registre os números reais obtidos, o ambiente de medição e as limitações (medição local não equivale a dados de campo).

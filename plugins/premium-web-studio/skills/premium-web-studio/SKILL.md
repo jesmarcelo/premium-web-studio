@@ -135,6 +135,7 @@ Arquivos temporários (screenshots, relatórios brutos, scripts de apoio) vão e
 | `scripts/check-firecrawl.sh` | Verifica configuração do Firecrawl sem expor a chave |
 | `scripts/audit-repo.sh` | Gera um panorama rápido de um repositório existente |
 | `scripts/seo-audit.py` | Auditoria de SEO on-page a partir do sitemap (somente leitura) |
+| `scripts/perf-audit.py` | Lighthouse mobile/desktop filtrado: cache, imagens, reflow forçado, árvore de rede, LCP, CLS, fontes |
 | `scripts/update.sh` | Verifica e aplica atualizações da Skill a partir do GitHub |
 
 Leia cada arquivo auxiliar somente quando chegar à fase correspondente.
@@ -147,6 +148,7 @@ O diretório desta Skill é `${CLAUDE_SKILL_DIR}`. Nos arquivos auxiliares, `<SK
 bash "${CLAUDE_SKILL_DIR}/scripts/check-firecrawl.sh"
 bash "${CLAUDE_SKILL_DIR}/scripts/audit-repo.sh"
 python3 "${CLAUDE_SKILL_DIR}/scripts/seo-audit.py" https://exemplo.com
+python3 "${CLAUDE_SKILL_DIR}/scripts/perf-audit.py" https://exemplo.com
 bash "${CLAUDE_SKILL_DIR}/scripts/update.sh" check
 ```
 

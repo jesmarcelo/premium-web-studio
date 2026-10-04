@@ -76,14 +76,19 @@ Detalhes em [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md).
 ## 6. Performance
 
 - [ ] Lighthouse mobile no build de produção (registre os números).
+- [ ] `scripts/perf-audit.py` rodado (mobile e desktop) contra o build de produção e, depois da publicação, contra o site publicado; cada item listado corrigido ou justificado.
 - [ ] Imagem LCP priorizada; demais imagens com lazy loading e dimensões.
 - [ ] Imagens raster em WebP, redimensionadas para o tamanho exibido medido (1× e 2×), sem originais PNG/JPG servidos (exceto `og:image` e favicons).
-- [ ] Fontes otimizadas (WOFF2, subset, `font-display`, preload apenas da crítica).
+- [ ] Toda imagem com `srcset` + `sizes` (ou `layout` responsivo do framework); nenhum arquivo entregue maior que exibido × `devicePixelRatio` (snippet de verificação em [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#pipeline-obrigatório-de-imagens-raster), em 375 e 1440 px).
+- [ ] Fontes otimizadas (WOFF2, subset, `font-display`, preload apenas da crítica); poucos arquivos de fonte na home.
+- [ ] Sem reflow forçado causado pelo código do projeto (Lighthouse "Forced reflow" e DevTools → Performance); os vindos de terceiros registrados.
+- [ ] Árvore de dependência de rede revisada: sem `@import` encadeado, sem scripts/beacons desnecessários no caminho crítico.
 - [ ] JS do cliente mínimo; componentes pesados carregados sob demanda.
 - [ ] Scripts de terceiros adiados ou com fachada.
 - [ ] CLS sem deslocamentos visíveis no carregamento.
 - [ ] HTML, CSS e JS minificados no build de produção.
-- [ ] Configuração de servidor gerada para a hospedagem ([references/server-config.md](references/server-config.md)): Brotli/gzip ativos e `Cache-Control` ≥ 30 dias em imagens, fontes, CSS e JS, verificados com `curl -I` no ambiente publicado (ou registrados como pendência).
+- [ ] Configuração de servidor gerada para a hospedagem ([references/server-config.md](references/server-config.md)) e **presente na pasta do build** (ex.: `dist/.htaccess`).
+- [ ] Brotli/gzip ativos e `Cache-Control` ≥ 30 dias verificados com `curl -I` no ambiente publicado em uma URL real de **cada extensão** servida (`webp`, `avif`, `woff2`, `css`, `js`, `svg`), ou registrados como pendência. Com CDN como proxy, Browser Cache TTL em "Respect Existing Headers".
 
 ## 7. Conteúdo
 

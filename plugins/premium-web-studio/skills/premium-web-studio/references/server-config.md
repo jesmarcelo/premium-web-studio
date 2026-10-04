@@ -1,6 +1,19 @@
 # Configuração de servidor: compressão e cache
 
-Todo projeto entregue sai com compressão e cache de navegador configurados para a hospedagem real. Identifique a hospedagem no discovery (ou pergunte) e gere **apenas** o arquivo correspondente.
+Todo projeto entregue sai com compressão e cache de navegador configurados para a hospedagem real. Identifique a hospedagem no discovery (ou pergunte) e gere **apenas** o arquivo correspondente. **Se a hospedagem for desconhecida, gere o `.htaccess`** (Apache/LiteSpeed é o caso mais comum em hospedagem compartilhada; em servidor que não o lê, o arquivo é inofensivo). Nunca entregue sem nenhuma configuração: sem ela, vale o padrão do servidor ou da CDN (muitas vezes 7 dias ou menos), e o PageSpeed acusa "política de cache ineficiente" em imagens e fontes.
+
+## O arquivo precisa chegar à pasta publicada
+
+O erro mais comum é criar o arquivo na raiz do repositório, onde o build o ignora. Coloque-o na pasta que o build copia sem processar:
+
+| Stack | Onde criar | Onde aparece após o build |
+|---|---|---|
+| Astro, Vite, SvelteKit (static), Nuxt (`generate`) | `public/.htaccess` | `dist/.htaccess` (ou `build/`, `.output/public/`) |
+| Eleventy | raiz + `addPassthroughCopy(".htaccess")` | `_site/.htaccess` |
+| Hugo | `static/.htaccess` | `public/.htaccess` |
+| HTML sem build | raiz publicada | a própria raiz |
+
+Depois do build, confirme: `ls -la dist/.htaccess` (ajuste a pasta). Se o site for publicado em subpasta (`dominio.com/projeto/`), o `.htaccess` vai na raiz dessa subpasta e vale para ela.
 
 ## Divisão de responsabilidades
 
@@ -112,6 +125,17 @@ Compressão é automática. Configure só o cache:
 
 Ajuste os caminhos às pastas reais do build.
 
+## Proxy de CDN na frente do servidor (ex.: Cloudflare com nuvem laranja)
+
+Quando há uma CDN como proxy (sinais: cabeçalhos `cf-cache-status`/`server: cloudflare`, requisições a `/cdn-cgi/` ou `static.cloudflareinsights.com`), ela pode reescrever o `Cache-Control` que o servidor envia:
+
+- **Browser Cache TTL** (Cloudflare: Caching → Configuration) precisa estar em **"Respect Existing Headers"**. Um valor fixo (ex.: 7 dias) substitui o cabeçalho do `.htaccess` quando este é menor ou ausente.
+- Regras de cache da CDN (Cache Rules, Page Rules) com "Browser TTL" também sobrescrevem; revise-as.
+- Depois de mudar o `.htaccess`, purgue o cache da CDN, senão ela continua servindo os cabeçalhos antigos.
+- O **beacon de Web Analytics/RUM** injetado pela CDN (`beacon.min.js` → `/cdn-cgi/rum`) costuma ser a cadeia mais longa da árvore de dependência de rede. Se o projeto não usa esses dados, desative o RUM/Web Analytics automático no painel da CDN (essa configuração é do painel, não do código; oriente o usuário).
+
+Essas configurações ficam fora do repositório: registre-as como passo de entrega para o usuário quando você não tiver acesso ao painel.
+
 ## Vercel — `vercel.json`
 
 Compressão automática; assets do Next.js (`/_next/static`) já saem com cache de 1 ano. Para pastas próprias:
@@ -134,7 +158,8 @@ Com o site publicado (ou em staging que use o mesmo servidor):
 ```bash
 curl -sI -H "Accept-Encoding: br, gzip" https://exemplo.com/ | grep -iE "content-encoding|cache-control"
 curl -sI -H "Accept-Encoding: br, gzip" https://exemplo.com/caminho/app.css | grep -iE "content-encoding|cache-control"
-curl -sI https://exemplo.com/caminho/imagem.webp | grep -i cache-control
+curl -sI https://exemplo.com/caminho/imagem.webp | grep -iE "cache-control|cf-cache-status"
+curl -sI https://exemplo.com/caminho/fonte.woff2 | grep -iE "cache-control|cf-cache-status"
 ```
 
-Esperado: `content-encoding: br` (ou `gzip`) em HTML/CSS/JS/SVG e `max-age` ≥ 2592000 em imagens, CSS, JS e fontes. Confirme no PageSpeed que o item de cache ineficiente não aparece. Servidor local de desenvolvimento não reflete essa configuração; se não houver ambiente publicado, registre a verificação como pendente.
+Teste **pelo menos uma URL real de cada extensão servida** (`.webp`, `.avif`, `.woff2`, `.css`, `.js`, `.svg`), pegando os caminhos do HTML publicado. Esperado: `content-encoding: br` (ou `gzip`) em HTML/CSS/JS/SVG e `max-age` ≥ 2592000 em imagens, CSS, JS e fontes. Se o `max-age` vier diferente do que o `.htaccess` define, ou o arquivo não foi publicado (confira o `ls` acima no servidor) ou a CDN está sobrescrevendo (seção anterior). O script `scripts/perf-audit.py` aponta os recursos com cache curto a partir do Lighthouse. Confirme no PageSpeed que o item de cache ineficiente não aparece. Servidor local de desenvolvimento não reflete essa configuração; se não houver ambiente publicado, registre a verificação como pendente.
