@@ -19,6 +19,7 @@ import os
 import shutil
 import subprocess
 import sys
+import urllib.request
 
 # Grupo -> IDs de auditoria. Inclui os nomes antigos e os "insights" (Lighthouse 12.6+/13).
 GROUPS = [
@@ -59,23 +60,67 @@ def rows(node, out, seen):
         return
     if not isinstance(node, dict):
         return
-    url, line = node.get("url"), None
+    url, line, col = node.get("url"), None, None
     if not isinstance(url, str):
         for child in ("source", "node", "entity"):
             c = node.get(child)
             if isinstance(c, dict) and isinstance(c.get("url"), str):
-                url, line = c["url"], c.get("line")
+                url, line, col = c["url"], c.get("line"), c.get("column")
                 break
     nums = {k: node[k] for k in NUMERIC if isinstance(node.get(k), (int, float)) and node[k]}
     if isinstance(url, str) and url.startswith("http") and (nums or "chains" not in node):
         key = (url, line, tuple(sorted(nums.items())))
         if key not in seen:
             seen.add(key)
-            label = url if line is None else f"{url}:{line + 1}"
+            label = url if line is None else f"{url}:{line + 1}:{col or 0}"
+            if any(m in url for m in CDN_MARKERS):
+                label += "  [da CDN: não é controlado pelo .htaccess nem pelo código]"
             out.append((label, nums))
+            if line is not None:
+                snippet = source_snippet(url, line, col or 0)
+                if snippet:
+                    out.append((f"      trecho: …{snippet}…", {}))
     for k, v in node.items():
         if k not in ("source", "node", "entity") and isinstance(v, (dict, list)):
             rows(v, out, seen)
+
+
+CDN_MARKERS = ("/cdn-cgi/", "cloudflareinsights.com")
+_SOURCES = {}
+
+
+def source_snippet(url, line, col, before=160, after=240):
+    """Trecho do código na linha/coluna apontada (útil para scripts inline no HTML)."""
+    if url not in _SOURCES:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 perf-audit"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                _SOURCES[url] = r.read().decode("utf-8", "ignore").split("\n")
+        except Exception:
+            _SOURCES[url] = None
+    lines = _SOURCES[url]
+    if not lines or line >= len(lines):
+        return None
+    text = lines[line]
+    return " ".join(text[max(0, col - before):col + after].split())
+
+
+def notes(node, out):
+    """Checklists reprovados e elementos (seletores) citados pela auditoria."""
+    if isinstance(node, list):
+        for item in node:
+            notes(item, out)
+    elif isinstance(node, dict):
+        if node.get("type") == "checklist" and isinstance(node.get("items"), dict):
+            for item in node["items"].values():
+                if isinstance(item, dict) and item.get("value") is False:
+                    out.append(f"reprovado: {item.get('label')}")
+        elif node.get("type") == "node" and node.get("selector"):
+            out.append(f"elemento: {node['selector']}")
+        else:
+            for v in node.values():
+                if isinstance(v, (dict, list)):
+                    notes(v, out)
 
 
 def longest_chain(node):
@@ -129,11 +174,15 @@ def analyze(path, label):
             lc = longest_chain(audit.get("details"))
             if lc is not None:
                 print(f"    latência máxima do caminho crítico: {lc:.0f} ms")
+            extra_notes = []
+            notes(audit.get("details"), extra_notes)
+            for n in dict.fromkeys(extra_notes):
+                print(f"    {n}")
             out = []
             rows(audit.get("details"), out, seen)
             for url, nums in out[:12]:
                 extra = ", ".join(f"{NUMERIC[k]} {fmt(k, v)}" for k, v in nums.items())
-                print(f"    - {url}" + (f"  ({extra})" if extra else ""))
+                print(url if url.startswith("      trecho") else f"    - {url}" + (f"  ({extra})" if extra else ""))
             if len(out) > 12:
                 print(f"    … e mais {len(out) - 12}")
     if not problems:

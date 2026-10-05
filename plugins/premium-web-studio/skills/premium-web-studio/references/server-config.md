@@ -129,10 +129,35 @@ Ajuste os caminhos às pastas reais do build.
 
 Quando há uma CDN como proxy (sinais: cabeçalhos `cf-cache-status`/`server: cloudflare`, requisições a `/cdn-cgi/` ou `static.cloudflareinsights.com`), ela pode reescrever o `Cache-Control` que o servidor envia:
 
-- **Browser Cache TTL** (Cloudflare: Caching → Configuration) precisa estar em **"Respect Existing Headers"**. Um valor fixo (ex.: 7 dias) substitui o cabeçalho do `.htaccess` quando este é menor ou ausente.
-- Regras de cache da CDN (Cache Rules, Page Rules) com "Browser TTL" também sobrescrevem; revise-as.
-- Depois de mudar o `.htaccess`, purgue o cache da CDN, senão ela continua servindo os cabeçalhos antigos.
+**Diagnóstico rápido:** compare o cabeçalho com a CDN ligada e desligada (pausar o proxy ou acessar a origem direto). Se o valor muda só com a CDN ligada, a CDN está reescrevendo. Um sinal típico é o `expires` com exatamente o TTL da CDN (ex.: 7 dias).
+
+Passo a passo para o usuário (Cloudflare; outras CDNs têm opções equivalentes):
+
+1. **Caching → Configuration → Browser Cache TTL** em **"Respect Existing Headers"**. Um valor fixo (ex.: 7 dias) reescreve `Expires`/`Cache-Control` vindos do `.htaccess`.
+2. **Caching → Cache Rules** e **Rules → Page Rules**: toda regra com "Browser TTL"/"Browser Cache TTL" fixo passa para **"Respect origin"** ou é removida.
+3. **Caching → Configuration → Purge Everything**, senão as cópias guardadas continuam com os cabeçalhos antigos. Repita sempre que mudar o `.htaccess`.
+4. Conferir com `curl -sI <url-de-um-asset>` duas vezes: na segunda deve vir `cf-cache-status: HIT`, e nas duas o `cache-control` (e o `expires`, se houver) deve ser o do `.htaccess`.
+5. Rodar o PageSpeed de novo alguns minutos depois. O que sobrar em `/cdn-cgi/` ou `cloudflareinsights` é da própria CDN (itens abaixo).
+
+Recursos da CDN que o `.htaccess` não controla:
+
 - O **beacon de Web Analytics/RUM** injetado pela CDN (`beacon.min.js` → `/cdn-cgi/rum`) costuma ser a cadeia mais longa da árvore de dependência de rede. Se o projeto não usa esses dados, desative o RUM/Web Analytics automático no painel da CDN (essa configuração é do painel, não do código; oriente o usuário).
+- **Scripts da própria CDN** (`/cdn-cgi/challenge-platform/...` da proteção anti-bot, o beacon acima) aparecem em "cache ineficiente" com 4 h ou 1 dia. O `.htaccess` não os alcança: ou se desativa o recurso no painel, ou se aceita o aviso e registra a origem no relatório de QA. Na Cloudflare (documentação de 2026):
+  - **Desafio anti-bot:** Security → Settings, filtro "Bot traffic", desligar **Bot Fight Mode** (link direto: `https://dash.cloudflare.com/?to=/:account/:zone/security/settings`). Com Bot Fight Mode ligado, o JavaScript Detections não pode ser desligado sozinho.
+  - **Beacon:** página Web Analytics (`https://dash.cloudflare.com/?to=/:account/web-analytics`) → **Manage site** → **Disable**. No plano Free o RUM vem ligado automaticamente.
+
+O painel muda de nomes e de idioma: passe os links diretos `dash.cloudflare.com/?to=...` ao usuário em vez de só o caminho de menus e, na dúvida, confira a documentação atual (`developers.cloudflare.com`).
+
+### Cabeçalho `Expires` diferente do `max-age`
+
+Hospedagens LiteSpeed/Apache costumam acrescentar um `Expires` padrão (ex.: 7 dias) mesmo com o `Cache-Control` correto. Navegadores e o Lighthouse usam o `max-age` quando ele existe e ignoram o `Expires`, então a resposta abaixo **está certa**:
+
+```http
+cache-control: public, max-age=31536000, immutable
+expires: <data daqui a 7 dias>
+```
+
+Se o PageSpeed ainda acusar 7 dias depois do deploy, confira nesta ordem: o resultado é de antes da publicação ou veio de uma cópia antiga (cada data center da CDN guarda a sua, e o PageSpeed roda de outra região que o `curl` local não alcança; ele também reaproveita resultados recentes da mesma URL). Se o `curl` já mostra o cabeçalho certo, não mexa em mais nada: espere de 30 a 60 minutos e rode de novo; `cf-cache-status: HIT` com cabeçalho antigo (purgue a CDN); ou as URLs acusadas são da CDN (item anterior). O framework de site estático (Astro, Vite, Eleventy) não envia cabeçalhos: quem decide é o servidor, a CDN ou o arquivo de configuração da hospedagem.
 
 Essas configurações ficam fora do repositório: registre-as como passo de entrega para o usuário quando você não tiver acesso ao painel.
 

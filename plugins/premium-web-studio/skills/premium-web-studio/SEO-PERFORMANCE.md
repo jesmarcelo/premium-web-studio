@@ -89,10 +89,22 @@ Metas de laboratório adicionais (orientativas): Lighthouse Performance ≥ 90 e
 
 #### Pipeline obrigatório de imagens raster
 1. **Meça o tamanho exibido.** Com a página rodando, descubra a maior largura CSS que a imagem ocupa em cada breakpoint (375, 768, 1440, 1920 px). No navegador: `getBoundingClientRect().width` do elemento; sem navegador, calcule pelo layout (largura do container, colunas, `max-width`). Registre também a proporção do recorte (`object-fit`/`aspect-ratio`).
-2. **Redimensione para o necessário.** Gere a versão 1× (maior largura exibida) e a 2× (para telas retina), nunca maiores que o original. Se a imagem aparece com tamanhos muito diferentes entre mobile e desktop, gere as larguras intermediárias para o `srcset`. Recorte na proporção exibida quando ela for fixa.
-3. **Converta para WebP.** Nunca converta PNG para JPG nem entregue o arquivo original. Qualidade de partida: ~75–82 para fotos, `-lossless` ou qualidade alta para ilustrações, capturas de tela e imagens com texto. WebP preserva transparência, então PNG com alfa também vira WebP. AVIF pode ser oferecido adicionalmente via `<picture>`.
-4. **Declare no markup.** `srcset` com as larguras geradas, `sizes` coerente com o layout medido, `width`/`height` da versão 1×.
-5. **Confira o resultado.** Compare o peso antes/depois e inspecione visualmente (artefatos, banding, texto borrado). Referência: imagem de conteúdo < 200 KB, hero < 300 KB na versão 1×.
+2. **Redimensione para larguras derivadas da medição, não para uma lista genérica.** Para cada breakpoint, gere a largura medida × 1 e × 2, mais as duas do PageSpeed (largura exibida no viewport de 412 px × 1,75 e no de 1350 px × 1), nunca maiores que o original. Entre dois candidatos vizinhos, no máximo ~15–20% de diferença: com candidatos esparsos (ex.: 400w e 720w para uma imagem exibida a 531 px), o navegador baixa o próximo acima e o PageSpeed acusa. Recorte na proporção exibida quando ela for fixa.
+3. **Converta para WebP com compressão real.** Nunca converta PNG para JPG nem entregue o arquivo original. Qualidade de partida: ~70–78 para fotos e ilustrações (com `-sharp_yuv` no `cwebp` quando houver texto ou bordas finas). Lossless e qualidade ≥ 90 quase sempre reprovam no critério de compressão abaixo; use só se o arquivo ainda passar nele. WebP com transparência também deve ser lossy (`-q 75 -alpha_q 80`). AVIF pode ser oferecido adicionalmente via `<picture>`.
+4. **Declare no markup.** `srcset` com as larguras geradas, `sizes` com a largura **medida** em cada breakpoint (um `sizes` de 500px para uma imagem que renderiza com 531 px faz o navegador pular para o candidato seguinte), `width`/`height` da versão 1×.
+5. **Confira o resultado** com o snippet de verificação abaixo e inspecione visualmente (artefatos, banding, texto borrado). Referência: imagem de conteúdo < 200 KB, hero < 300 KB na versão 1×.
+
+**Como o PageSpeed julga cada imagem** (critérios do código do Lighthouse, "Improve image delivery"):
+
+| Aviso | Quando aparece | Como passar |
+|---|---|---|
+| "Aumentar o fator de compactação" | arquivo com mais de **0,167 byte por pixel do arquivo** (largura × altura do arquivo, não da tela) e economia estimada acima de 4 KiB | qualidade ~70–78, sem lossless; `bytes ≤ largura × altura × 0,16 + 4096` |
+| "Maior do que precisa ser" (com `srcset`) | pixels do arquivo além dos exibidos × densidade, valendo mais de **12 KiB** | candidatos próximos (passo 2) e `sizes` medido |
+| "Maior do que precisa ser" (sem `srcset`) | qualquer sobra acima de 4 KiB | sempre `srcset` |
+
+O PageSpeed emula mobile com viewport de 412 px a densidade 1,75 e desktop com 1350 px a densidade 1; teste nesses dois cenários.
+
+**Logos e marcas:** SVG sempre que existir ou puder ser vetorizado (peça o vetor ao cliente). Logo raster com transparência, mesmo pequeno, costuma passar de 0,8 byte/pixel em lossless e é reprovado. Se for inevitável, WebP lossy com `-alpha_q`, no tamanho exibido × 2. Não baixe duas versões do mesmo logo (positivo/negativo) quando só uma aparece: use `<picture>` com `media`, CSS ou um SVG com `currentColor`.
 
 Ferramentas, conforme o disponível no projeto (verifique antes; peça aprovação para instalar):
 ```bash
@@ -109,18 +121,22 @@ Mantenha o original fora da pasta pública (ex.: `assets-src/` ou `tmp/`) para p
 
 **Componentes de imagem do framework** (`next/image`, `astro:assets`, `@nuxt/image` etc.) já redimensionam e convertem, **mas só geram `srcset` quando configurados para isso**. Uma única `width` gera um único arquivo e nenhum `srcset`: todo dispositivo baixa a mesma imagem. Regras:
 
-- **Astro (`<Image>`/`<Picture>`):** use `layout="constrained"` (ou `full-width` para imagens de largura total), que gera `srcset` e `sizes` automaticamente (Astro 5.10+; em versões anteriores, `experimental.responsiveImages`); ou passe `widths={[...]}` **e** `sizes` explícitos. `width` sozinho não basta. Defina `quality` (~75–80) em vez de depender do padrão.
+- **Astro (`<Image>`/`<Picture>`):** passe `widths={[...]}` com as larguras do passo 2 **e** `sizes` medido, além de `quality={75}` (ou o padrão global em `image.service.config`). `width` sozinho gera um único arquivo. `layout="constrained"` (Astro 5.10+) gera `srcset` automaticamente, mas com breakpoints genéricos e espaçados (640, 750, 828, 1080…) e um `sizes` que presume uma coluna; em layouts com colunas, sobrescreva `widths` e `sizes`.
 - **Next (`next/image`):** `sizes` é obrigatório sempre que a imagem não tem largura fixa (com `fill` ou largura responsiva); sem ele, o navegador assume `100vw` e baixa a maior versão. Ajuste `quality` (~75).
 - **Nuxt (`<NuxtImg>`):** use `sizes` (ex.: `sizes="sm:100vw md:50vw lg:600px"`) e `densities="x1 x2"`.
 - **Qualquer framework:** o passo 1 continua obrigatório: o `sizes` precisa refletir a largura medida em cada breakpoint, não um chute. Confirme que o formato de saída inclui WebP/AVIF.
 
-**Verificação no navegador.** Com o build de produção aberto, rode no console (ou via Playwright `page.evaluate`) em 375 e 1440 px e corrija toda linha que aparecer:
+**Verificação no navegador.** Com o build de produção aberto, role a página até o fim (para carregar as imagens lazy) e rode no console (ou via Playwright `page.evaluate`) nos dois cenários do PageSpeed: 412 px com densidade 1,75 e 1350 px com densidade 1 (no DevTools, modo dispositivo com "Device pixel ratio"). Corrija toda linha que aparecer:
 
 ```js
-[...document.images].filter(i => i.currentSrc && i.getBoundingClientRect().width > 0).map(i => {
-  const need = Math.ceil(i.getBoundingClientRect().width * devicePixelRatio);
-  return { src: i.currentSrc.split('/').pop(), arquivo: i.naturalWidth, exibido: Math.round(i.getBoundingClientRect().width), necessario: need, sobra: (i.naturalWidth / need).toFixed(2) };
-}).filter(r => r.arquivo > r.necessario * 1.15)
+[...document.images].filter(i => i.currentSrc && i.getBoundingClientRect().width > 0 && !i.currentSrc.endsWith('.svg')).map(i => {
+  const r = i.getBoundingClientRect(), px = i.naturalWidth * i.naturalHeight;
+  const bytes = performance.getEntriesByName(i.currentSrc)[0]?.decodedBodySize || 0;
+  const sobraPx = 1 - (r.width * r.height * devicePixelRatio ** 2) / px;
+  return { src: i.currentSrc.split('/').pop(), arquivo: `${i.naturalWidth}x${i.naturalHeight}`, exibido: `${Math.round(r.width)}x${Math.round(r.height)}`,
+    kib: +(bytes / 1024).toFixed(1), bytesPorPixel: +(bytes / px).toFixed(3),
+    compressao: bytes - px * 0.167 > 4096 ? 'REPROVA' : 'ok', tamanho: sobraPx > 0 && sobraPx * bytes > 12288 ? 'REPROVA' : 'ok' };
+}).filter(x => x.compressao !== 'ok' || x.tamanho !== 'ok')
 ```
 
 `scripts/perf-audit.py` faz a mesma checagem a partir do Lighthouse, em mobile e desktop.
@@ -142,19 +158,46 @@ Mantenha o original fora da pasta pública (ex.: `assets-src/` ou `tmp/`) para p
 - Code splitting por rota; `import()` dinâmico para componentes pesados abaixo da dobra (mapas, players, gráficos, carrosséis).
 - Evite bibliotecas pesadas para tarefas simples (ver [ENGINEERING.md](ENGINEERING.md#dependências)).
 - Quebre tarefas longas (> 50 ms) em interações; evite handlers síncronos pesados (INP).
+- Analise o bundle (`vite-bundle-visualizer`, `@next/bundle-analyzer`, `rollup-plugin-visualizer`).
 
 ### Reflow forçado (layout thrashing)
-Acontece quando o JS lê uma propriedade de geometria logo depois de alterar estilo ou DOM, obrigando o navegador a recalcular o layout na hora. O PageSpeed lista em "Reflow forçado" com o arquivo e a linha. Regras para todo JS escrito no projeto:
+Acontece quando o JS lê uma propriedade de geometria depois de alterar estilo ou DOM no mesmo quadro, obrigando o navegador a recalcular o layout na hora. O PageSpeed lista em "Reflow forçado" com arquivo, linha e coluna (`/pagina/:6:538` = script inline na linha 6 do HTML). O resultado varia entre execuções, porque depende do que roda durante a carga: um teste limpo não prova ausência; a prevenção está no código.
 
-- **Leia tudo, depois escreva tudo.** Nunca alterne em loop `el.style.x = ...` com leituras de `offsetWidth/Height/Top`, `clientWidth/Height`, `scrollTop/Height`, `getBoundingClientRect()`, `getComputedStyle()`, `innerWidth`. Junte as leituras antes e aplique as escritas depois, de preferência dentro de `requestAnimationFrame`.
-- **Observers no lugar de medições em evento.** `IntersectionObserver` para revelar ao rolar, lazy load, header que muda e contadores; `ResizeObserver` para reagir a tamanho; `matchMedia` para breakpoints. Nada de `getBoundingClientRect()` dentro de `scroll`/`resize`.
+**Propriedades que forçam layout quando lidas:** `offsetTop/Left/Width/Height`, `clientWidth/Height`, `scrollTop/Height`, `scrollX/scrollY`, `innerWidth/innerHeight`, `getBoundingClientRect()`, `getComputedStyle()`, `focus()`, `scrollIntoView()`.
+
+**O padrão que mais causa o problema** é o header "inteligente" com scroll spy: no handler de rolagem, troca uma classe (`is-compact`) e logo em seguida lê `getBoundingClientRect()`/`offsetHeight` do próprio header e de todas as seções para descobrir a seção ativa e a cor do menu. E ainda chama essa função de forma síncrona na carga. Ele é proibido. Use observers, que entregam a geometria sem forçar layout e já disparam com o estado inicial:
+
+```js
+// Header compacto: um sentinela no topo da página, sem ler scrollY.
+const nav = document.querySelector('[data-nav]');
+const sentinel = document.querySelector('[data-nav-sentinel]'); // elemento vazio no topo, com altura (ex.: 40vh)
+new IntersectionObserver(([e]) => nav.classList.toggle('is-compact', !e.isIntersecting)).observe(sentinel);
+
+// Scroll spy: seção que cruza a linha a 45% da altura da tela.
+const links = new Map([...document.querySelectorAll('[data-spy]')].map(a => [a.hash.slice(1), a]));
+const spy = new IntersectionObserver(entries => {
+  for (const e of entries) if (e.isIntersecting) links.forEach((a, id) => id === e.target.id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+}, { rootMargin: '-45% 0px -55% 0px' });
+document.querySelectorAll('main section[id]').forEach(s => spy.observe(s));
+
+// Cor do menu conforme a seção sob ele: faixa fina na altura do header.
+const theme = new IntersectionObserver(entries => {
+  for (const e of entries) if (e.isIntersecting) nav.classList.toggle('is-light', e.target.dataset.nav === 'light');
+}, { rootMargin: '-40px 0px -95% 0px' });
+document.querySelectorAll('main section[data-nav]').forEach(s => theme.observe(s));
+```
+
+Regras para todo JS do projeto:
+
+- **Observers no lugar de medições em evento.** `IntersectionObserver` para header que muda, scroll spy, revelar ao rolar, lazy load e contadores; `ResizeObserver` para reagir a tamanho; `matchMedia` para breakpoints. Nenhuma propriedade da lista acima dentro de `scroll`, `resize`, `pointermove` ou de um loop.
+- **Se medir for inevitável: leia tudo, depois escreva tudo**, dentro de `requestAnimationFrame`, com as leituras no início do callback e nenhuma escrita antes delas. Guarde valores que mudam pouco (`innerHeight`, alturas) e atualize-os só num `ResizeObserver`.
+- **Nada de medição síncrona na carga do script.** Não chame `atualizar()` no fim do módulo para "acertar o estado inicial": os observers já fazem isso no primeiro callback. Se precisar, agende com `requestAnimationFrame`.
 - **Animação em `transform`/`opacity`**, não em `top`, `left`, `width`, `height` ou `margin`.
-- **Medição inicial fora do caminho crítico:** cálculo de altura (acordeão, menu, marquee) só quando o componente é usado, ou com CSS (`grid-template-rows: 0fr → 1fr`, `interpolate-size`, `details`) para dispensar a medição.
+- **Altura de acordeão, menu e marquee com CSS** (`grid-template-rows: 0fr → 1fr`, `interpolate-size: allow-keywords`, `<details>`), sem medir `scrollHeight`.
 - **Bibliotecas de animação/scroll** (GSAP ScrollTrigger, Lenis, AOS, carrosséis) inicializadas depois do primeiro paint e só nas páginas que as usam.
-- Se o reflow vier de script de terceiro (analytics, chat, beacon da CDN), registre a origem e avalie adiar ou remover; não é corrigível no código do projeto.
+- Se o reflow vier de script de terceiro (analytics, chat, beacon ou desafio anti-bot da CDN), registre a origem e avalie adiar ou remover; não é corrigível no código do projeto.
 
-**Verificação:** Lighthouse ("Forced reflow"/"Reflow forçado" vazio, também listado por `scripts/perf-audit.py`) e, para detalhe, DevTools → Performance: blocos roxos "Layout" com aviso "Forced reflow" apontam a linha do código.
-- Analise o bundle (`vite-bundle-visualizer`, `@next/bundle-analyzer`, `rollup-plugin-visualizer`).
+**Verificação:** antes de entregar, procure no código-fonte as propriedades da lista acima (`grep -rnE "getBoundingClientRect|offset(Top|Height|Width)|scrollY|innerHeight|getComputedStyle" src/`) e confira que nenhuma ocorrência está em handler de rolagem/redimensionamento, depois de uma escrita no mesmo quadro ou na execução inicial do script. Depois, Lighthouse/`scripts/perf-audit.py` (que mostra o trecho do código na linha e coluna apontadas) rodado mais de uma vez, e DevTools → Performance: blocos roxos "Layout" com aviso "Forced reflow" apontam a linha.
 
 ### Scripts de terceiros
 - Inventarie todos (analytics, chat, pixels, mapas, vídeos incorporados).

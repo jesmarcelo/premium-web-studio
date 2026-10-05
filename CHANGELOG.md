@@ -6,6 +6,15 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [1.0.2] - 2026-10-05
+
+### Corrigido
+
+- Imagens: larguras do `srcset` derivadas da medição (inclusive os cenários do PageSpeed, 412 px × 1,75 e 1350 px × 1) em vez de listas genéricas; `sizes` igual à largura renderizada; critérios exatos do Lighthouse documentados (0,167 byte/pixel para compressão, 12 KiB de sobra com `srcset`); qualidade WebP 70–78, sem lossless por padrão; logos em SVG ou WebP lossy.
+- Reflow forçado: lista das propriedades que forçam layout, o padrão do header com scroll spy proibido e uma implementação de referência com `IntersectionObserver`; busca no código como verificação obrigatória.
+- Cache: passo a passo para quando a CDN reescreve o cache (Browser Cache TTL, Cache Rules/Page Rules, purge, conferência com `curl`), diagnóstico comparando a CDN ligada e desligada, caminhos atuais da Cloudflare com links diretos do painel e orientação para esperar a renovação das cópias regionais antes de mexer em configuração; o `Expires` diferente do `max-age` é inofensivo; scripts da própria CDN não são controlados pelo `.htaccess`; roteiro para quando o PageSpeed ainda acusa cache curto.
+- `perf-audit.py`: mostra itens reprovados de checklists (ex.: falta de `fetchpriority`), o seletor do elemento, o trecho de código na linha/coluna do reflow e marca as URLs que pertencem à CDN.
+
 ## [1.0.1] - 2026-10-04
 
 ### Adicionado
@@ -39,6 +48,7 @@ Primeira versão pública.
 - Comando `/premium-web-studio update` para verificar e aplicar atualizações a partir do GitHub.
 - Instalação pelo marketplace do Claude Code ou manualmente como Skill.
 
-[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.1...HEAD
+[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jesmarcelo/premium-web-studio/releases/tag/v1.0.0
