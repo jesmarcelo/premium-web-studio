@@ -80,10 +80,11 @@ Detalhes em [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md).
 - [ ] Imagem LCP priorizada; demais imagens com lazy loading e dimensões.
 - [ ] Imagens raster em WebP, redimensionadas para o tamanho exibido medido (1× e 2×), sem originais PNG/JPG servidos (exceto `og:image` e favicons).
 - [ ] Toda imagem com `srcset` de larguras derivadas da medição (vizinhas a no máximo ~20%) e `sizes` igual à largura renderizada; snippet de verificação de [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#pipeline-obrigatório-de-imagens-raster) sem linhas nos cenários 412 px × 1,75 e 1350 px × 1.
-- [ ] Nenhuma imagem acima de 0,167 byte/pixel com mais de 4 KiB de sobra (critério de compressão do PageSpeed); logos em SVG ou WebP lossy, sem duas versões baixadas quando só uma aparece.
+- [ ] Nenhuma imagem acima de 0,167 byte/pixel com mais de 4 KiB de sobra (critério de compressão do PageSpeed); logos em SVG ou WebP lossy (com alfa lossy, `alpha_q` ~50, nas imagens transparentes), sem duas versões baixadas quando só uma aparece.
 - [ ] Fontes otimizadas (WOFF2, subset, `font-display`, preload apenas da crítica); poucos arquivos de fonte na home.
 - [ ] Sem reflow forçado causado pelo código do projeto: busca no código pelas propriedades de geometria sem ocorrência em handler de rolagem/redimensionamento, após escrita no mesmo quadro ou na execução inicial; Lighthouse rodado mais de uma vez sem "Forced reflow" do projeto; os vindos de terceiros registrados.
 - [ ] Imagem LCP com `fetchpriority="high"`, sem `loading="lazy"` e descoberta no HTML (o grupo LCP do `perf-audit.py` sem itens reprovados).
+- [ ] Elemento LCP (o que o `perf-audit.py` imprime, muitas vezes um texto do hero no mobile) visível desde o primeiro paint: sem `opacity: 0` nem `animation-delay` na entrada; "Element render delay" abaixo de 1 s.
 - [ ] Árvore de dependência de rede revisada: sem `@import` encadeado, sem scripts/beacons desnecessários no caminho crítico.
 - [ ] JS do cliente mínimo; componentes pesados carregados sob demanda.
 - [ ] Scripts de terceiros adiados ou com fachada.

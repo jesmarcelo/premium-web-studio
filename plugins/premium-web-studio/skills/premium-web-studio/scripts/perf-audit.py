@@ -150,6 +150,22 @@ def failing(audit):
     return score < 0.9
 
 
+def lcp_breakdown(audit):
+    """Elemento LCP e suas fases. Sai sempre: o insight costuma passar mesmo com atraso de renderização alto."""
+    items = ((audit or {}).get("details") or {}).get("items") or []
+    node = next((i for i in items if i.get("type") == "node"), None)
+    phases = next((i.get("items") for i in items if i.get("type") == "table"), None) or []
+    if not node and not phases:
+        return
+    if node:
+        print(f"Elemento LCP: {node.get('selector')}  \"{(node.get('nodeLabel') or '')[:60]}\"")
+    if phases:
+        print("  fases: " + "  ".join(f"{p.get('label')} {p.get('duration', 0):.0f} ms" for p in phases))
+    delay = next((p.get("duration", 0) for p in phases if p.get("subpart") == "elementRenderDelay"), 0)
+    if delay > 1000:
+        print("  ! atraso de renderização alto: verifique se o elemento LCP entra com opacity 0 ou animation-delay")
+
+
 def analyze(path, label):
     with open(path, encoding="utf-8") as fh:
         lhr = json.load(fh)
@@ -159,6 +175,7 @@ def analyze(path, label):
           f"(Lighthouse {lhr.get('lighthouseVersion')}) ===")
     print(f"Performance: {round(perf * 100) if perf is not None else '?'}  |  " + "  ".join(
         f"{name} {audits[a].get('displayValue', '?')}" for a, name in METRICS if a in audits))
+    lcp_breakdown(audits.get("lcp-breakdown-insight"))
     problems = 0
     for group, ids in GROUPS:
         found = [audits[i] for i in ids if i in audits and failing(audits[i])]

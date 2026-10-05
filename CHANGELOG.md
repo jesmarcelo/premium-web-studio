@@ -6,6 +6,15 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [1.0.3] - 2026-10-05
+
+### Corrigido
+
+- Snippet de verificação de imagens no navegador: lia `img.naturalWidth`, que em `srcset` com descritores `w` vem dividido pela densidade escolhida; em telas de alta densidade (ex.: 412 px × 1,75) acusava falsos problemas de compressão e escondia os de tamanho. Agora lê as dimensões reais do arquivo carregando `currentSrc` numa `Image` avulsa.
+- WebP com transparência: o canal alfa também precisa ser lossy (`alpha_q` ~50 em vez de 80); o sharp grava o alfa sem perda por padrão e componentes de imagem de framework não expõem esse controle. Orientação para gerar fora do componente ou achatar sobre o fundo; logos em camadas raster são julgados camada a camada.
+- LCP: o elemento LCP não pode entrar com `opacity: 0` ou `animation-delay` (gera "Element render delay"); no mobile ele costuma ser o parágrafo do hero. `perf-audit.py` passa a imprimir sempre o elemento LCP e suas fases, com alerta quando o atraso de renderização passa de 1 s.
+- Fórmula de compressão na tabela corrigida para 0,167 byte/pixel, igual ao texto e ao snippet.
+
 ## [1.0.2] - 2026-10-05
 
 ### Corrigido
@@ -48,7 +57,8 @@ Primeira versão pública.
 - Comando `/premium-web-studio update` para verificar e aplicar atualizações a partir do GitHub.
 - Instalação pelo marketplace do Claude Code ou manualmente como Skill.
 
-[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.2...HEAD
+[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jesmarcelo/premium-web-studio/releases/tag/v1.0.0

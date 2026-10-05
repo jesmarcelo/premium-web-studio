@@ -83,6 +83,7 @@ Metas de laboratório adicionais (orientativas): Lighthouse Performance ≥ 90 e
 - `srcset`/`sizes` responsivos; nunca sirva imagem 2× maior que o necessário.
 - `width`/`height` ou `aspect-ratio` sempre (evita CLS).
 - Imagem LCP: **sem** lazy loading, com `fetchpriority="high"` (ou o recurso equivalente do framework, como `priority` no `next/image`) e, se descoberta tardiamente, `preload`.
+- **O elemento LCP nunca entra com animação atrasada.** O LCP só é registrado quando o elemento fica visível; um texto ou imagem que começa com `opacity: 0` (ou `visibility: hidden`, `clip-path`, blur total) e só aparece depois de um `animation-delay` empurra o LCP pelo tempo do atraso mais a animação (o Lighthouse mostra isso como "Element render delay"). No mobile o LCP costuma ser o parágrafo de abertura do hero, não o título nem a imagem: confirme qual é no relatório (`perf-audit.py` imprime o elemento) e deixe esse elemento visível desde o primeiro paint. A coreografia de entrada pode continuar nos outros elementos; se o LCP também precisar de movimento, anime só `transform`, partindo de opacidade 1, sem atraso.
 - `loading="lazy"` e `decoding="async"` abaixo da dobra.
 - Use o componente de imagem do framework quando existir.
 - Toda imagem raster (fornecida pelo cliente, gerada ou de banco) passa pelo pipeline abaixo antes de entrar no site.
@@ -90,7 +91,7 @@ Metas de laboratório adicionais (orientativas): Lighthouse Performance ≥ 90 e
 #### Pipeline obrigatório de imagens raster
 1. **Meça o tamanho exibido.** Com a página rodando, descubra a maior largura CSS que a imagem ocupa em cada breakpoint (375, 768, 1440, 1920 px). No navegador: `getBoundingClientRect().width` do elemento; sem navegador, calcule pelo layout (largura do container, colunas, `max-width`). Registre também a proporção do recorte (`object-fit`/`aspect-ratio`).
 2. **Redimensione para larguras derivadas da medição, não para uma lista genérica.** Para cada breakpoint, gere a largura medida × 1 e × 2, mais as duas do PageSpeed (largura exibida no viewport de 412 px × 1,75 e no de 1350 px × 1), nunca maiores que o original. Entre dois candidatos vizinhos, no máximo ~15–20% de diferença: com candidatos esparsos (ex.: 400w e 720w para uma imagem exibida a 531 px), o navegador baixa o próximo acima e o PageSpeed acusa. Recorte na proporção exibida quando ela for fixa.
-3. **Converta para WebP com compressão real.** Nunca converta PNG para JPG nem entregue o arquivo original. Qualidade de partida: ~70–78 para fotos e ilustrações (com `-sharp_yuv` no `cwebp` quando houver texto ou bordas finas). Lossless e qualidade ≥ 90 quase sempre reprovam no critério de compressão abaixo; use só se o arquivo ainda passar nele. WebP com transparência também deve ser lossy (`-q 75 -alpha_q 80`). AVIF pode ser oferecido adicionalmente via `<picture>`.
+3. **Converta para WebP com compressão real.** Nunca converta PNG para JPG nem entregue o arquivo original. Qualidade de partida: ~70–78 para fotos e ilustrações (com `-sharp_yuv` no `cwebp` quando houver texto ou bordas finas). Lossless e qualidade ≥ 90 quase sempre reprovam no critério de compressão abaixo; use só se o arquivo ainda passar nele. WebP com transparência também deve ser lossy **inclusive no canal alfa**: o sharp e vários encoders gravam o alfa sem perda por padrão (`alphaQuality: 100`), e em arte fina com transparência (traços de logo, filetes, ornamentos) o alfa pesa mais que a cor. Parta de `-q 70 -alpha_q 50` no `cwebp` (sharp: `{ quality: 70, alphaQuality: 50, effort: 6 }`) e suba o `alpha_q` só se as bordas serrilharem. Componentes de imagem de framework costumam expor só `quality`, sem controle do alfa; se a imagem transparente reprovar, gere os arquivos fora do componente (script com sharp/`cwebp` e `srcset` manual) ou, quando o fundo atrás dela for sempre o mesmo, achate a imagem sobre essa cor e elimine o alfa. AVIF pode ser oferecido adicionalmente via `<picture>`.
 4. **Declare no markup.** `srcset` com as larguras geradas, `sizes` com a largura **medida** em cada breakpoint (um `sizes` de 500px para uma imagem que renderiza com 531 px faz o navegador pular para o candidato seguinte), `width`/`height` da versão 1×.
 5. **Confira o resultado** com o snippet de verificação abaixo e inspecione visualmente (artefatos, banding, texto borrado). Referência: imagem de conteúdo < 200 KB, hero < 300 KB na versão 1×.
 
@@ -98,13 +99,13 @@ Metas de laboratório adicionais (orientativas): Lighthouse Performance ≥ 90 e
 
 | Aviso | Quando aparece | Como passar |
 |---|---|---|
-| "Aumentar o fator de compactação" | arquivo com mais de **0,167 byte por pixel do arquivo** (largura × altura do arquivo, não da tela) e economia estimada acima de 4 KiB | qualidade ~70–78, sem lossless; `bytes ≤ largura × altura × 0,16 + 4096` |
+| "Aumentar o fator de compactação" | arquivo com mais de **0,167 byte por pixel do arquivo** (largura × altura do arquivo, não da tela) e economia estimada acima de 4 KiB | qualidade ~70–78, sem lossless, alfa lossy em imagens transparentes; `bytes ≤ largura × altura × 0,167 + 4096` |
 | "Maior do que precisa ser" (com `srcset`) | pixels do arquivo além dos exibidos × densidade, valendo mais de **12 KiB** | candidatos próximos (passo 2) e `sizes` medido |
 | "Maior do que precisa ser" (sem `srcset`) | qualquer sobra acima de 4 KiB | sempre `srcset` |
 
 O PageSpeed emula mobile com viewport de 412 px a densidade 1,75 e desktop com 1350 px a densidade 1; teste nesses dois cenários.
 
-**Logos e marcas:** SVG sempre que existir ou puder ser vetorizado (peça o vetor ao cliente). Logo raster com transparência, mesmo pequeno, costuma passar de 0,8 byte/pixel em lossless e é reprovado. Se for inevitável, WebP lossy com `-alpha_q`, no tamanho exibido × 2. Não baixe duas versões do mesmo logo (positivo/negativo) quando só uma aparece: use `<picture>` com `media`, CSS ou um SVG com `currentColor`.
+**Logos e marcas:** SVG sempre que existir ou puder ser vetorizado (peça o vetor ao cliente). Logo raster com transparência, mesmo pequeno, costuma passar de 0,8 byte/pixel em lossless e é reprovado. Se for inevitável, WebP lossy com `-alpha_q 50` (ver passo 3), no tamanho exibido × 2; logo de arte fina pequeno pode reprovar mesmo assim (medido: 220 × 95 px com `-q 75 -alpha_q 80` fica em ~0,6 byte/pixel), e aí a saída é vetorizar ou achatar sobre o fundo. Isso vale também para logos montados em camadas raster para animação: cada camada é uma imagem julgada separadamente. Não baixe duas versões do mesmo logo (positivo/negativo) quando só uma aparece: use `<picture>` com `media`, CSS ou um SVG com `currentColor`.
 
 Ferramentas, conforme o disponível no projeto (verifique antes; peça aprovação para instalar):
 ```bash
@@ -129,15 +130,25 @@ Mantenha o original fora da pasta pública (ex.: `assets-src/` ou `tmp/`) para p
 **Verificação no navegador.** Com o build de produção aberto, role a página até o fim (para carregar as imagens lazy) e rode no console (ou via Playwright `page.evaluate`) nos dois cenários do PageSpeed: 412 px com densidade 1,75 e 1350 px com densidade 1 (no DevTools, modo dispositivo com "Device pixel ratio"). Corrija toda linha que aparecer:
 
 ```js
-[...document.images].filter(i => i.currentSrc && i.getBoundingClientRect().width > 0 && !i.currentSrc.endsWith('.svg')).map(i => {
-  const r = i.getBoundingClientRect(), px = i.naturalWidth * i.naturalHeight;
-  const bytes = performance.getEntriesByName(i.currentSrc)[0]?.decodedBodySize || 0;
-  const sobraPx = 1 - (r.width * r.height * devicePixelRatio ** 2) / px;
-  return { src: i.currentSrc.split('/').pop(), arquivo: `${i.naturalWidth}x${i.naturalHeight}`, exibido: `${Math.round(r.width)}x${Math.round(r.height)}`,
-    kib: +(bytes / 1024).toFixed(1), bytesPorPixel: +(bytes / px).toFixed(3),
-    compressao: bytes - px * 0.167 > 4096 ? 'REPROVA' : 'ok', tamanho: sobraPx > 0 && sobraPx * bytes > 12288 ? 'REPROVA' : 'ok' };
-}).filter(x => x.compressao !== 'ok' || x.tamanho !== 'ok')
+(async () => {
+  const imgs = [...document.images].filter(i => i.currentSrc && i.getBoundingClientRect().width > 0 && !i.currentSrc.endsWith('.svg'));
+  const linhas = await Promise.all(imgs.map(async i => {
+    // Dimensões reais do arquivo: em <img srcset> com descritores "w", naturalWidth vem dividido pela densidade escolhida.
+    const f = new Image(); f.src = i.currentSrc; await f.decode().catch(() => {});
+    const w = f.naturalWidth, h = f.naturalHeight, px = w * h, r = i.getBoundingClientRect();
+    const bytes = performance.getEntriesByName(i.currentSrc)[0]?.decodedBodySize || 0;
+    const sobraPx = 1 - (r.width * r.height * devicePixelRatio ** 2) / px;
+    return { src: i.currentSrc.split('/').pop(), arquivo: `${w}x${h}`, exibido: `${Math.round(r.width)}x${Math.round(r.height)}`,
+      kib: +(bytes / 1024).toFixed(1), bytesPorPixel: +(bytes / px).toFixed(3),
+      compressao: bytes - px * 0.167 > 4096 ? 'REPROVA' : 'ok', tamanho: sobraPx > 0 && sobraPx * bytes > 12288 ? 'REPROVA' : 'ok' };
+  }));
+  const reprovadas = linhas.filter(x => x.compressao !== 'ok' || x.tamanho !== 'ok');
+  console.table(reprovadas);
+  return reprovadas;
+})()
 ```
+
+Não use `img.naturalWidth` direto para essa conta: quando a imagem vem de um `srcset` com descritores `w`, o navegador divide as dimensões do arquivo pela densidade que escolheu (arquivo de 720 px num slot de 412 px a 1,75× aparece como 412). Em telas de alta densidade isso subestima os pixels, gera falsos "REPROVA" de compressão e esconde os de tamanho. O snippet acima carrega `currentSrc` numa `Image` avulsa, sem `srcset`, para ler as dimensões reais (vem do cache, sem novo download).
 
 `scripts/perf-audit.py` faz a mesma checagem a partir do Lighthouse, em mobile e desktop.
 
