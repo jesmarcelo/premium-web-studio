@@ -50,7 +50,8 @@
 - Regulamentações do setor que afetam o conteúdo (ex.: regras de publicidade de conselhos profissionais, informações legais obrigatórias da empresa, avisos financeiros ou de saúde)?
 - Prioridades de SEO (palavras-chave, SEO local, migração de URLs existentes)?
 - Restrições técnicas (hospedagem compartilhada, sem Node no servidor, políticas de TI, navegadores legados)?
-- Domínio e deploy (onde será publicado, quem administra)?
+- Domínio e deploy (onde será publicado, quem administra)? **Qual é a URL pública final**, com subpasta se houver (`https://www.exemplo.com/` ou `https://host.com/projeto/`)? Sem ela não há canonical nem imagem na prévia de compartilhamento ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#url-pública-final-pré-requisito)). Se o domínio definitivo ainda não existe, onde o site ficará no ar enquanto isso? Há CDN ou firewall na frente (ex.: proteção contra bots) e quem tem acesso ao painel?
+- Google e redes: já existe conta no Search Console (ou quem pode verificar o domínio), perfil no Google Business Profile e perfis oficiais nas redes (para `sameAs`)? Qual frase e qual imagem devem aparecer quando o link for compartilhado?
 
 ## Escolha de stack (quando o usuário não sabe)
 

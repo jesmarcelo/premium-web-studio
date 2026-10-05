@@ -7,6 +7,8 @@ Regra central: **marque um item como aprovado apenas se ele foi realmente verifi
 - ⚠️ verificado parcialmente (explique);
 - ⏭️ não verificado (explique por quê — ex.: ferramenta indisponível).
 
+Um ❌ só pode ficar no relatório final com um destes estados: **decisão do usuário** (opções e custos apresentados, escolha registrada com data), **fora do controle do projeto** (com evidência) ou **a verificar após publicar** (com o comando). Qualquer outro ❌ volta ao [ciclo de correção](WORKFLOW.md#ciclo-de-correção-até-zerar-fases-8-a-10).
+
 Rode tudo contra o **build de produção** sempre que possível.
 
 ---
@@ -63,11 +65,15 @@ Detalhes em [ACCESSIBILITY.md](ACCESSIBILITY.md).
 
 Detalhes em [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md).
 
+- [ ] `scripts/build-audit.py <pasta do build> --site <url final>` saindo com código 0 (ou cada reprovação com estado final).
 - [ ] `scripts/seo-audit.py` rodado contra o build de produção (ou o site publicado), sem pendências não justificadas.
+- [ ] URL pública final (domínio e subpasta, se houver) configurada no build; canonical, `og:url`, `og:image` e URLs do JSON-LD absolutos, e nenhuma reescrita de caminho pós-build tocando neles.
 - [ ] `title` (30–65) e `description` (70–160) únicos por página, gerados a partir de campos do conteúdo.
-- [ ] Canonical, `lang`, Open Graph (com imagem, dimensões e `alt`) e Twitter/X card; `og:type` = `article` em artigos.
+- [ ] Canonical, `lang`, Open Graph (com imagem, dimensões e `alt`) e Twitter/X card com `twitter:image`; `og:type` = `article` em artigos.
+- [ ] Imagem de compartilhamento desenhada para a marca (legível em miniatura), JPG/PNG 1200×630 até 300 KB; robôs do Facebook, WhatsApp, X e LinkedIn recebem 200 (`seo-audit.py`); prévia conferida no Sharing Debugger/Post Inspector depois de publicar, ou registrada como a verificar.
+- [ ] Google: `WebSite` com `name` na home, `Organization.logo` absoluto (≥ 112×112), favicon quadrado múltiplo de 48 px, `max-image-preview:large`; Search Console verificado e sitemap enviado (ou listado nas pendências com o passo a passo para o usuário).
 - [ ] Paginação com "Página N" no título e canonical próprio; taxonomias com texto próprio ou `noindex`.
-- [ ] `sitemap.xml` (com `lastmod` real) e `robots.txt` corretos; `/favicon.ico` responde 200; variante `www`/não-`www` com redirect 301.
+- [ ] `sitemap.xml` (com `lastmod` real) e `robots.txt` corretos; `/favicon.ico` responde 200; variante `www`/não-`www` com redirect 301. Em subpasta, o que depende da raiz do domínio registrado conforme [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#site-servido-numa-subpasta).
 - [ ] Dados estruturados válidos e condizentes com o conteúdo visível: grafo Organization/WebSite (e Person, se houver), `BreadcrumbList` abaixo da home, `BlogPosting` completo em artigos.
 - [ ] Conteúdo principal presente no HTML inicial.
 - [ ] Redirects 301 para URLs alteradas (em redesign).
@@ -76,14 +82,14 @@ Detalhes em [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md).
 ## 6. Performance
 
 - [ ] Lighthouse mobile no build de produção (registre os números).
-- [ ] `scripts/perf-audit.py` rodado (mobile e desktop) contra o build de produção e, depois da publicação, contra o site publicado; cada item listado corrigido ou justificado.
+- [ ] `scripts/perf-audit.py --runs 3` rodado (mobile e desktop) contra o build de produção e, depois da publicação, contra o site publicado; cada item listado resolvido ou com estado final da [escada de soluções](SEO-PERFORMANCE.md#escada-de-soluções).
 - [ ] Imagem LCP priorizada; demais imagens com lazy loading e dimensões.
-- [ ] Imagens raster em WebP, redimensionadas para o tamanho exibido medido (1× e 2×), sem originais PNG/JPG servidos (exceto `og:image` e favicons).
+- [ ] Imagens raster em AVIF com fallback WebP (`<picture>` com `<source type="image/avif">` ou negociação pelo `Accept`), redimensionadas para o tamanho exibido medido (1× e 2×), sem originais PNG/JPG servidos (exceto `og:image` e favicons); o `<img>` de fallback aponta para WebP.
 - [ ] Toda imagem com `srcset` de larguras derivadas da medição (vizinhas a no máximo ~20%) e `sizes` igual à largura renderizada; snippet de verificação de [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#pipeline-obrigatório-de-imagens-raster) sem linhas nos cenários 412 px × 1,75 e 1350 px × 1.
-- [ ] Nenhuma imagem acima de 0,167 byte/pixel com mais de 4 KiB de sobra (critério de compressão do PageSpeed); logos em SVG ou WebP lossy (com alfa lossy, `alpha_q` ~50, nas imagens transparentes), sem duas versões baixadas quando só uma aparece.
+- [ ] Nenhuma imagem acima de 0,167 byte/pixel com mais de 4 KiB de sobra (critério de compressão do PageSpeed), conferido em todos os arquivos do build com `build-audit.py`; o critério vale para o AVIF entregue (o WebP de fallback reprovado vira aviso); logos em SVG ou AVIF + WebP com alfa lossy, sem duas versões baixadas quando só uma aparece.
 - [ ] Fontes otimizadas (WOFF2, subset, `font-display`, preload apenas da crítica); poucos arquivos de fonte na home.
-- [ ] Sem reflow forçado causado pelo código do projeto: busca no código pelas propriedades de geometria sem ocorrência em handler de rolagem/redimensionamento, após escrita no mesmo quadro ou na execução inicial; Lighthouse rodado mais de uma vez sem "Forced reflow" do projeto; os vindos de terceiros registrados.
-- [ ] Imagem LCP com `fetchpriority="high"`, sem `loading="lazy"` e descoberta no HTML (o grupo LCP do `perf-audit.py` sem itens reprovados).
+- [ ] Sem reflow forçado causado pelo código do projeto: `build-audit.py` sem linhas no grupo `reflow` (nenhuma leitura de geometria no nível superior dos scripts, como `let y = scrollY`), revisão dos handlers no código-fonte e `perf-audit.py --runs 3` sem "Forced reflow" do projeto; os vindos de terceiros registrados.
+- [ ] `fetchpriority="high"` no elemento que o `perf-audit.py` imprime como LCP, em mobile e desktop (não no que se supõe ser o principal), sem `loading="lazy"` e descoberto no HTML; o grupo LCP sem itens reprovados.
 - [ ] Elemento LCP (o que o `perf-audit.py` imprime, muitas vezes um texto do hero no mobile) visível desde o primeiro paint: sem `opacity: 0` nem `animation-delay` na entrada; "Element render delay" abaixo de 1 s.
 - [ ] Árvore de dependência de rede revisada: sem `@import` encadeado, sem scripts/beacons desnecessários no caminho crítico.
 - [ ] JS do cliente mínimo; componentes pesados carregados sob demanda.

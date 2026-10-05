@@ -120,6 +120,7 @@ As decisões ficam registradas em `docs/website/` no seu projeto, e os arquivos 
 - Conta no Firecrawl (para a pesquisa de referências).
 - Node.js 18+ (para o servidor MCP do Firecrawl via `npx`).
 - Bash, para os scripts auxiliares (macOS, Linux, ou WSL/Git Bash no Windows).
+- Python 3, para as auditorias de build, SEO e performance (só biblioteca padrão); a de performance também usa Node.js e Chrome para rodar o Lighthouse.
 - Opcional, para a revisão visual: Playwright MCP, Claude in Chrome ou Playwright CLI.
 
 ## Estrutura do repositório
@@ -144,7 +145,7 @@ plugins/premium-web-studio/
     ├── SECURITY.md                      # secrets, prompt injection, comandos
     ├── references/                      # perfis de nicho, stacks, Firecrawl, modelos
     ├── VERSION                          # versão da Skill (usada pelo comando update)
-    └── scripts/                         # diagnóstico do Firecrawl, auditoria de repositório, SEO e performance, update
+    └── scripts/                         # diagnóstico do Firecrawl, auditoria de repositório, do build, de SEO e de performance, update
 ```
 
 ## Validar a instalação

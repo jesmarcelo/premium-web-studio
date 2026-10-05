@@ -46,6 +46,9 @@ Data: <AAAA-MM-DD> · Modo: <Projeto completo | Evolução | Melhoria focada>
 ## Técnico
 - Stack escolhida:
 - Hospedagem / deploy:
+- URL pública final (domínio + subpasta, se houver; provisória até o domínio definitivo):
+- CDN / firewall e quem administra:
+- Search Console, Google Business Profile e perfis oficiais (`sameAs`):
 - CMS:
 - Backend / banco / autenticação:
 - Formulários (destino dos dados):
@@ -250,6 +253,15 @@ Legenda: ✅ aprovado · ❌ problema · ⚠️ parcial · ⏭️ não verificad
 - Violações axe:
 - Tamanho do JS inicial:
 
+## Auditorias (build-audit / perf-audit / seo-audit)
+| Item | Ferramenta e onde aponta | Degraus tentados | Estado | Custo medido | O que resolveria |
+|---|---|---|---|---|---|
+| <ex.: compressão de camada do logo> | build-audit: `_astro/x.webp` 0,26 B/px | WebP q70 a50 → AVIF 50 | Resolvido | — | — |
+| <ex.: animação de entrada do LCP> | perf-audit: render delay 1,6 s | visível desde o 1º paint recusado | Decisão do usuário (AAAA-MM-DD) | +1,6 s de LCP | tirar o atraso da animação |
+| <ex.: beacon da CDN> | perf-audit: `/cdn-cgi/...` | — | Fora do controle (painel do provedor) | 20 ms | desativar no painel |
+
+Estados válidos: Resolvido · Decisão do usuário (com data) · Fora do controle do projeto (com evidência) · A verificar após publicar (com o comando). Item sem estado válido volta ao ciclo de correção.
+
 ## Revisão visual
 | Prioridade | Página | Viewport | Problema | Status |
 |---|---|---|---|---|
@@ -281,8 +293,10 @@ Entregue no chat (e opcionalmente em `docs/website/delivery.md`):
 
 ### Pendências
 - Conteúdo a fornecer: 
-- Configurações a fazer (ex.: variáveis de ambiente, domínio):
-- Problemas conhecidos:
+- Configurações a fazer (ex.: variáveis de ambiente, domínio, verificação no Search Console, envio do sitemap):
+- A verificar após publicar (comando exato):
+- Decisões do usuário com custo (item — opção escolhida — custo medido — o que resolveria):
+- Fora do controle do projeto (item — evidência — quem pode resolver):
 
 ### Sugestões futuras
 - 

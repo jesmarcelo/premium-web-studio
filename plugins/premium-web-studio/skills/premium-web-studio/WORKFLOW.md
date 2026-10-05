@@ -106,8 +106,9 @@ Use uma lista de tarefas (todo list) para acompanhar as fases em projetos comple
 3. Ao fim de cada etapa: rode build/lint/tipos e confira visualmente quando possível.
 4. Corrija erros encontrados no caminho, inclusive os que você mesmo introduziu.
 5. Não deixe código morto, `console.log` de depuração, TODOs sem registro ou componentes duplicados.
-6. Configure minificação no build e gere a configuração de compressão e cache da hospedagem (ex.: `.htaccess` em Apache/LiteSpeed) conforme [references/server-config.md](references/server-config.md), dentro da pasta que o build copia (ex.: `public/.htaccess`), e confirme que ele aparece na saída do build. Imagens com `srcset`/`sizes` desde o primeiro componente, e JS sem reflow forçado ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#reflow-forçado-layout-thrashing)).
-7. Se o usuário usa git, sugira commits por etapa; só faça commit se ele pedir.
+6. Configure minificação no build e gere a configuração de compressão e cache da hospedagem (ex.: `.htaccess` em Apache/LiteSpeed) conforme [references/server-config.md](references/server-config.md), dentro da pasta que o build copia (ex.: `public/.htaccess`), e confirme que ele aparece na saída do build. Imagens em `<picture>` AVIF + WebP com `srcset`/`sizes` desde o primeiro componente, e JS sem reflow forçado ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#reflow-forçado-layout-thrashing)). Configure a URL pública final no framework desde o início ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#url-pública-final-pré-requisito)) e crie a imagem de compartilhamento como peça de design.
+7. Ao fim de cada etapa que mexa em imagens, scripts ou `<head>`, rode `scripts/build-audit.py` na pasta do build e corrija o que ele apontar antes de seguir.
+8. Se o usuário usa git, sugira commits por etapa; só faça commit se ele pedir.
 
 **Critério de saída:** escopo implementado, build passando.
 
@@ -117,9 +118,21 @@ Use uma lista de tarefas (todo list) para acompanhar as fases em projetos comple
 
 **Objetivo:** validar tecnicamente.
 
-**Ações:** execute [QA-CHECKLIST.md](QA-CHECKLIST.md) seções técnicas, com apoio de [ACCESSIBILITY.md](ACCESSIBILITY.md) e [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md). Rode as ferramentas disponíveis (build, lint, typecheck, testes, Lighthouse, axe). Registre o resultado real de cada verificação.
+**Ações:** execute [QA-CHECKLIST.md](QA-CHECKLIST.md) seções técnicas, com apoio de [ACCESSIBILITY.md](ACCESSIBILITY.md) e [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md). Rode as ferramentas disponíveis (build, lint, typecheck, testes, Lighthouse, axe) e as três auditorias da Skill: `build-audit.py` no build, `perf-audit.py --runs 3` e `seo-audit.py` no `preview` e, depois de publicado, no site real. Registre o resultado real de cada verificação.
 
-**Saída:** `docs/website/qa-report.md`.
+**Saída:** `docs/website/qa-report.md`, com cada item reprovado listado na tabela de pendências.
+
+### Ciclo de correção até zerar (fases 8 a 10)
+
+As auditorias não são uma foto para o relatório; são o critério de parada. Para cada item reprovado:
+
+1. Leia a causa no próprio dado da ferramenta (linha:coluna, seletor do elemento LCP, arquivo e bytes por pixel), não numa suposição. Abra o arquivo publicado ou do build na posição apontada.
+2. Aplique o degrau seguinte da [escada de soluções](SEO-PERFORMANCE.md#escada-de-soluções) para aquele problema.
+3. Rode o build e a mesma auditoria de novo. Reflow forçado e LCP só contam como resolvidos depois de 3 rodadas seguidas limpas.
+4. Se continuou reprovado, suba um degrau e repita. Não troque de assunto deixando o item "a ver depois".
+5. O item sai do ciclo apenas como **resolvido**, **decisão do usuário** ou **fora do controle do projeto**. Quando o próximo degrau depende do usuário (aceitar uma mudança visual, fornecer vetor, domínio ou acesso), pergunte com opções e o custo medido de cada uma; enquanto ele não responde, avance nos itens que não dependem dele.
+
+Se o mesmo item continuar reprovado depois de todos os degraus, investigue a premissa (o arquivo publicado é o do último build? a CDN serve cópia antiga? o elemento LCP mudou?) antes de concluir que não tem solução.
 
 ---
 
@@ -137,7 +150,9 @@ Use uma lista de tarefas (todo list) para acompanhar as fases em projetos comple
 
 **Objetivo:** corrigir os problemas das fases 8 e 9.
 
-**Ações:** corrija por prioridade (bloqueadores → acessibilidade → quebras de layout → hierarquia/estética → polimento). Revalide o que foi alterado. Repita 8–10 até não restarem problemas bloqueadores ou até o limite combinado com o usuário.
+**Ações:** corrija por prioridade (bloqueadores → acessibilidade → quebras de layout → hierarquia/estética → polimento). Revalide o que foi alterado. Repita 8–10 até as três auditorias saírem limpas ou com cada item restante classificado como decisão do usuário ou fora do controle do projeto (ciclo acima), e até não restarem problemas visuais bloqueadores.
+
+**Critério de saída:** nenhum item das auditorias sem estado final. Itens que só podem ser verificados no ambiente publicado (cache, compressão do servidor, robôs das redes, Search Console) ficam como "a verificar após publicar", com o comando exato para o usuário ou para a próxima sessão.
 
 ---
 
@@ -146,3 +161,5 @@ Use uma lista de tarefas (todo list) para acompanhar as fases em projetos comple
 **Objetivo:** entregar um resumo objetivo e honesto.
 
 **Saída:** relatório no formato de [references/templates.md](references/templates.md#relatório-de-entrega): o que foi feito, decisões importantes, arquivos principais, testes realizados (e não realizados), pendências, placeholders de conteúdo e sugestões futuras.
+
+Cada pendência técnica aparece com o estado (decisão do usuário, fora do controle, a verificar após publicar), o custo medido e o que a resolveria. Se o site foi publicado depois da entrega e o usuário trouxer um relatório do PageSpeed, volte ao ciclo de correção com ele.

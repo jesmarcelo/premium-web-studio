@@ -6,6 +6,25 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [1.0.4] - 2026-10-05
+
+### Adicionado
+
+- Ciclo de correção até zerar: todo item reprovado pelas auditorias volta a corrigir → build → auditar e sobe uma escada de soluções por problema, até sair **resolvido**, por **decisão do usuário** (com opções e custo medido) ou **fora do controle do projeto** (com evidência). "Pendente" ou "aceito" sem um desses estados não conta como entrega. Relatório de QA com tabela de auditorias (degraus tentados, estado, custo, o que resolveria).
+- `scripts/build-audit.py`: auditoria da pasta do build, sem rede e sem navegador. Aponta leituras de geometria na execução inicial dos scripts com `arquivo:linha:coluna` no formato do PageSpeed, o critério de compressão do PageSpeed em todos os arquivos de imagem gerados, PNG/JPG servidos, `<img>` sem `srcset`, excesso de `fetchpriority`, canonical/`og:url`/`og:image` relativos, a imagem de compartilhamento (formato, 1200×630, ≤ 300 KB), `og:image:alt`, `twitter:image`, JSON-LD `WebSite`/`Organization`, `robots.txt`, sitemap e `favicon.ico`.
+- URL pública final como pré-requisito do build de entrega (domínio e subpasta), perguntada no discovery; reescritas de caminho pós-build não podem tocar em canonical, `og:*` nem JSON-LD.
+- Imagem de compartilhamento tratada como peça de design (composição legível em miniatura, como gerar, como testar e limpar o cache das redes) e liberação dos robôs das redes na proteção contra bots da CDN.
+- Seção sobre o Google: Search Console, nome do site (`WebSite`), ícone e logo nos resultados, `max-image-preview:large`, Google Business Profile, e o que muda quando o site fica numa subpasta.
+- `perf-audit.py`: `--runs N` para repetir as rodadas e próximo passo impresso em cada grupo reprovado.
+- `seo-audit.py`: prévia de compartilhamento (robôs do Facebook, WhatsApp, X e LinkedIn; `og:image` absoluta, baixável, JPG/PNG, dimensões e peso), `og:url`, `og:image:alt`, `twitter:image`, URLs relativas, `max-image-preview`, `WebSite` na home e `robots.txt`/`favicon.ico` na raiz quando o site está numa subpasta.
+
+### Corrigido
+
+- Reflow forçado: uma única leitura de geometria no nível superior do módulo (ex.: `let lastY = scrollY`) força o layout da página inteira na carga e o PageSpeed atribui todo esse tempo à linha; exemplo de correção e verificação em três etapas (`build-audit.py`, revisão dos handlers, `perf-audit.py --runs 3`).
+- `fetchpriority` no elemento que o relatório aponta como LCP, medido em mobile e desktop, e não no que parece ser o principal (em composições com várias imagens, a maior camada em área costuma ser o LCP).
+- Imagens raster passam a sair em **AVIF com fallback WebP** por padrão (`<picture>` com `<source type="image/avif">`, ou negociação pelo `Accept` no `next/image` e em CDNs), com qualidade própria para cada formato (AVIF 50–55, WebP 70–78). Medido: camada transparente de 19,5 KiB em WebP para 9,3 KiB em AVIF; foto detalhada de 126 KiB para 99 KiB, as duas passando no critério do PageSpeed. Regras por framework: no Astro, `<Picture formats={['avif']} fallbackFormat="webp">` (sem `fallbackFormat` o fallback sai em PNG) e qualidade por formato no `sharpImageService` em vez da prop `quality`; `image-set()` para imagens em CSS; `preload` com `type="image/avif"`. `build-audit.py` reprova `<img>` raster fora de `<picture>` com AVIF e trata o WebP de fallback acima do critério como aviso.
+- `seo-audit.py`: `alt` sem valor (comum em HTML minificado) não é mais contado como ausente; a home servida numa subpasta não é mais cobrada por `BreadcrumbList`; variante `www` sem DNS deixa de ser tratada como erro.
+
 ## [1.0.3] - 2026-10-05
 
 ### Corrigido
@@ -57,7 +76,8 @@ Primeira versão pública.
 - Comando `/premium-web-studio update` para verificar e aplicar atualizações a partir do GitHub.
 - Instalação pelo marketplace do Claude Code ou manualmente como Skill.
 
-[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.3...HEAD
+[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.0...v1.0.1

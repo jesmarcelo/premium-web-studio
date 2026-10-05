@@ -8,6 +8,7 @@ LCP, CLS, fontes e bloqueio de renderização, com as URLs afetadas.
 Uso:
   python3 perf-audit.py https://exemplo.com
   python3 perf-audit.py http://localhost:4321 --only mobile
+  python3 perf-audit.py https://exemplo.com --runs 3          # repete: reflow e LCP variam entre execuções
   python3 perf-audit.py --report tmp/lighthouse/mobile.json   # analisa um relatório já salvo
 
 Os relatórios ficam em ./tmp/lighthouse/ (relativo à pasta onde o comando foi executado).
@@ -34,6 +35,20 @@ GROUPS = [
     ("Bloqueio de renderização", ["render-blocking-insight", "render-blocking-resources"]),
     ("Terceiros", ["third-parties-insight", "third-party-summary"]),
 ]
+# Próximo passo de cada grupo reprovado (detalhes em SEO-PERFORMANCE.md#escada-de-soluções).
+HINTS = {
+    "Cache": "conferir a regra na saída do build e o cabeçalho com curl; com CDN, Browser Cache TTL e purge (references/server-config.md)",
+    "Imagens": "srcset/sizes medidos -> AVIF de fato entregue (<picture>, fallback WebP) -> AVIF 40-45 com conferência visual -> SVG ou achatar -> decisão do usuário; "
+               "pré-confira cada arquivo com build-audit.py",
+    "Reflow forçado": "o trecho acima lê geometria na carga ou depois de uma escrita; build-audit.py aponta as do nível superior; "
+                      "corrija, rode o build e repita com --runs 3",
+    "LCP": "fetchpriority=high e loading=eager no elemento LCP impresso acima (medido no mobile e no desktop), não no que parece maior",
+    "CLS": "width/height ou aspect-ratio em mídia, espaço reservado para conteúdo tardio, fontes com métricas de fallback",
+    "Fontes": "font-display swap/optional, preload só da fonte do texto acima da dobra, menos arquivos",
+    "Bloqueio de renderização": "CSS crítico inline ou arquivo único pequeno, scripts com defer/type=module",
+    "Árvore de rede": "menos arquivos de fonte, nada de @import encadeado, beacons de terceiros fora do caminho crítico",
+    "Terceiros": "adiar, carregar após interação/consentimento ou remover; registrar como fora do controle se não der",
+}
 METRICS = [("largest-contentful-paint", "LCP"), ("cumulative-layout-shift", "CLS"),
            ("total-blocking-time", "TBT"), ("first-contentful-paint", "FCP"), ("speed-index", "SI")]
 NUMERIC = {"wastedBytes": "desperdício", "totalBytes": "total", "transferSize": "transferido",
@@ -202,16 +217,20 @@ def analyze(path, label):
                 print(url if url.startswith("      trecho") else f"    - {url}" + (f"  ({extra})" if extra else ""))
             if len(out) > 12:
                 print(f"    … e mais {len(out) - 12}")
+            if any(n.startswith("reprovado") and "fetchpriority" in n for n in extra_notes):
+                print("    → o fetchpriority=high vai no elemento listado acima; se ele já está em outra imagem, mova-o")
+        if any(a.get("score") is not None for a in found) and group in HINTS:
+            print(f"  próximo passo: {HINTS[group]}")
     if not problems:
         print("\nNenhuma falha nos grupos auditados.")
     return problems
 
 
-def run_lighthouse(url, form, outdir):
+def run_lighthouse(url, form, outdir, run=0):
     npx = shutil.which("npx")
     if not npx:
         sys.exit("npx não encontrado: instale o Node.js ou use --report com um JSON do Lighthouse.")
-    path = os.path.join(outdir, f"{form}.json")
+    path = os.path.join(outdir, f"{form}-{run + 1}.json" if run else f"{form}.json")
     cmd = [npx, "-y", "lighthouse", url, "--output=json", f"--output-path={path}", "--quiet",
            "--only-categories=performance", "--chrome-flags=--headless=new"]
     if form == "desktop":
@@ -228,6 +247,8 @@ def main():
     p.add_argument("url", nargs="?", help="URL a auditar (build de produção ou site publicado)")
     p.add_argument("--report", action="append", help="JSON do Lighthouse já salvo (pode repetir)")
     p.add_argument("--only", choices=["mobile", "desktop"], help="roda só um formato")
+    p.add_argument("--runs", type=int, default=1,
+                   help="rodadas por formato (reflow forçado e LCP variam entre execuções; use 3 antes de dar por resolvido)")
     p.add_argument("--outdir", default=os.path.join("tmp", "lighthouse"))
     args = p.parse_args()
     if not args.url and not args.report:
@@ -240,9 +261,15 @@ def main():
     else:
         os.makedirs(args.outdir, exist_ok=True)
         for form in [args.only] if args.only else ["mobile", "desktop"]:
-            problems += analyze(run_lighthouse(args.url, form, args.outdir), form)
+            for run in range(max(1, args.runs)):
+                label = form if args.runs <= 1 else f"{form} — rodada {run + 1}/{args.runs}"
+                problems += analyze(run_lighthouse(args.url, form, args.outdir, run), label)
         if args.url.startswith(("http://localhost", "http://127.", "http://0.0.0.0")):
             print("\nAviso: em localhost, o grupo Cache reflete o servidor de preview, não a hospedagem.")
+    if problems:
+        print(f"\n{problems} auditorias reprovadas. Corrija, rode o build e repita até zerar; o que não zerar segue a escada "
+              "de soluções (SEO-PERFORMANCE.md) e só sai do ciclo resolvido, por decisão registrada do usuário ou "
+              "fora do controle do projeto.")
     sys.exit(1 if problems else 0)
 
 

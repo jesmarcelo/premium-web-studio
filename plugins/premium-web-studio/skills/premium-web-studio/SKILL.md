@@ -92,6 +92,8 @@ Pare e aguarde a resposta do usuário:
 - **Animações** são proporcionais ao contexto e sempre respeitam `prefers-reduced-motion`.
 - **Evite a estética genérica de IA** (lista completa em [DESIGN.md](DESIGN.md#anti-padrões-de-site-gerado-por-ia)).
 - **Teste antes de declarar conclusão.** Nunca afirme que algo foi validado se não foi; diga exatamente o que foi e o que não foi testado.
+- **Corrija até zerar.** Todo item reprovado pelas auditorias (`build-audit.py`, `perf-audit.py`, `seo-audit.py`) volta ao ciclo corrigir → build → auditar e sobe a escada de soluções até sair **resolvido**, por **decisão do usuário** (tomada com as opções e o custo de cada uma na frente) ou **fora do controle do projeto** (com evidência). "Pendente" ou "aceito" sem um desses estados não é entrega ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#escada-de-soluções)).
+- **URL pública final antes do build de entrega.** Canonical, `og:image` e sitemap precisam dela; sem ela, a prévia de compartilhamento sai sem imagem.
 
 ## Segurança (resumo — detalhes em [SECURITY.md](SECURITY.md))
 
@@ -134,8 +136,9 @@ Arquivos temporários (screenshots, relatórios brutos, scripts de apoio) vão e
 | [references/server-config.md](references/server-config.md) | Compressão, cache e `.htaccess`/Nginx/Netlify/Vercel |
 | `scripts/check-firecrawl.sh` | Verifica configuração do Firecrawl sem expor a chave |
 | `scripts/audit-repo.sh` | Gera um panorama rápido de um repositório existente |
-| `scripts/seo-audit.py` | Auditoria de SEO on-page a partir do sitemap (somente leitura) |
-| `scripts/perf-audit.py` | Lighthouse mobile/desktop filtrado: cache, imagens, reflow forçado, árvore de rede, LCP, CLS, fontes |
+| `scripts/build-audit.py` | Auditoria da pasta do build, sem rede: reflow na carga dos scripts, compressão de cada imagem, URLs absolutas, imagem de compartilhamento, JSON-LD, robots/sitemap/favicon |
+| `scripts/seo-audit.py` | Auditoria de SEO on-page e da prévia de compartilhamento a partir do sitemap (somente leitura) |
+| `scripts/perf-audit.py` | Lighthouse mobile/desktop filtrado (com `--runs`): cache, imagens, reflow forçado, árvore de rede, LCP, CLS, fontes, com o próximo passo de cada falha |
 | `scripts/update.sh` | Verifica e aplica atualizações da Skill a partir do GitHub |
 
 Leia cada arquivo auxiliar somente quando chegar à fase correspondente.
@@ -147,8 +150,9 @@ O diretório desta Skill é `${CLAUDE_SKILL_DIR}`. Nos arquivos auxiliares, `<SK
 ```bash
 bash "${CLAUDE_SKILL_DIR}/scripts/check-firecrawl.sh"
 bash "${CLAUDE_SKILL_DIR}/scripts/audit-repo.sh"
+python3 "${CLAUDE_SKILL_DIR}/scripts/build-audit.py" dist --site https://exemplo.com/
 python3 "${CLAUDE_SKILL_DIR}/scripts/seo-audit.py" https://exemplo.com
-python3 "${CLAUDE_SKILL_DIR}/scripts/perf-audit.py" https://exemplo.com
+python3 "${CLAUDE_SKILL_DIR}/scripts/perf-audit.py" https://exemplo.com --runs 3
 bash "${CLAUDE_SKILL_DIR}/scripts/update.sh" check
 ```
 
