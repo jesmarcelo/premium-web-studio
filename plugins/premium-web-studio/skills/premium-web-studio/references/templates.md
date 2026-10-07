@@ -136,6 +136,16 @@ Limitações: avaliação baseada nos dados do Firecrawl; não mede performance 
 ### Princípios para a direção visual
 1. 
 
+## Barra de qualidade
+Extraída de: <referência principal> — <URL> · Aprovada no G3 em: <AAAA-MM-DD>
+
+| # | Mecanismo observável | Onde conferir (página, estado, viewport) |
+|---|---|---|
+| 1 | <ex.: o título domina a primeira tela e há uma única ação principal visível> | home, primeira tela, 375 e 1440 px |
+| 2 | | |
+
+Alterações (somente por decisão do usuário): <data — o que mudou — motivo>
+
 ## Observações de segurança
 <páginas com instruções suspeitas/prompt injection, se houver; ou "nenhuma">
 ```
@@ -262,12 +272,58 @@ Legenda: ✅ aprovado · ❌ problema · ⚠️ parcial · ⏭️ não verificad
 
 Estados válidos: Resolvido · Decisão do usuário (com data) · Fora do controle do projeto (com evidência) · A verificar após publicar (com o comando). Item sem estado válido volta ao ciclo de correção.
 
-## Revisão visual
+## Revisão visual (autoverificação)
 | Prioridade | Página | Viewport | Problema | Status |
+|---|---|---|---|---|
+
+## Ciclo visual (críticos independentes)
+Rodadas globais executadas: <N> · Teto do usuário: <sem teto | N> · Críticos cegos: <nenhum | qual e por quê>
+
+| Parte | Briefing | Sistema | Visual | Estado |
+|---|---|---|---|---|
+| <ex.: home, primeira tela> | APROVADO | APROVADO | REPROVADO | Pendente |
+| <ex.: página de serviço> | APROVADO | APROVADO | APROVADO | Aprovada na rodada 3 |
+
+Estados válidos: Pendente · Aprovada na rodada N · Interrompida pelo usuário (data, lacuna em aberto).
+
+### Histórico das lacunas
+| Rodada | Parte | Crítico | Maior lacuna | Correção aplicada |
 |---|---|---|---|---|
 
 ## Não verificado e por quê
 ```
+
+---
+
+## Instruções dos críticos
+
+Modelo para montar a instrução de cada crítico em [VISUAL-REVIEW.md](../VISUAL-REVIEW.md). Adapte ao projeto e mantenha curto. Cada crítico recebe um subagente novo, sem o histórico da conversa.
+
+```markdown
+Você é o crítico de <briefing | sistema | visual> de um site. Seja duro: elogios não ajudam.
+
+Leia somente estes arquivos:
+- <briefing.md | design-direction.md (tokens e regras) | barra de qualidade>
+- <capturas: tmp/review/rodada-N/parte-M/...>
+Não abra nenhum outro arquivo e não leia código.
+
+Julgue somente <o pedido | a aderência ao sistema | a barra e a comparação A/B>. Ignore <estética | se ficou bonito | se cumpre o pedido>.
+
+[Só no crítico visual]
+A e B são dois sites em estados equivalentes; você não sabe qual é qual.
+- Para cada mecanismo da barra, diga qual lado o cumpre melhor.
+- Diga qual lado é melhor no conjunto.
+- Diga se um lado parece cópia do outro (layout distintivo, composição característica, identidade).
+- Textos e imagens marcados como placeholder não contam contra; julgue composição, hierarquia, ritmo, tipografia e acabamento.
+
+Responda exatamente neste formato:
+[briefing e sistema] VEREDITO: APROVADO | REPROVADO
+[visual] MELHOR: A | B · CÓPIA: sim | não
+MAIOR LACUNA: <uma só, do lado reprovado ou do lado pior, com página, viewport e estado; vazio se aprovado>
+EVIDÊNCIA: <o que na captura sustenta a resposta>
+```
+
+O crítico visual não sabe qual lado é o nosso, então o coordenador converte a resposta com o mapa A/B, que o crítico nunca vê: **APROVADO** só se o lado escolhido for o nosso e `CÓPIA: não`. Se o nosso lado perder, a maior lacuna apontada no lado pior é a que volta para correção; se houver cópia, a lacuna é a semelhança apontada.
 
 ---
 

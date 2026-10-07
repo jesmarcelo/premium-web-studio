@@ -125,7 +125,15 @@ Detalhes em [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md).
 
 Capture, no mínimo, home e páginas-chave em 375, 768, 1440 e 1920 px, e estados de hover/foco/erro relevantes.
 
+### Cuidados com a captura
+- **Elementos fixos, sticky, canvas ou vídeo** costumam sair duplicados, deslocados ou em branco com `--full-page`. Nesses casos, capture por viewport, rolando a página, e confira cada captura com o que aparece no navegador. Falha de captura não é defeito do site: refaça a captura antes de registrar o problema.
+- **Animações e scroll-linked** não aparecem numa tela parada: percorra a rolagem com capturas sequenciais ou gere uma tira de frames ([VISUAL-REVIEW.md](VISUAL-REVIEW.md#3-evidências)).
+- **Comparação com a referência** só vale entre larguras e estados equivalentes.
+
 ### O que procurar (olhar de diretor de arte)
+
+Este checklist é a **autoverificação** antes do ciclo de críticos: serve para eliminar os defeitos óbvios. Ele não substitui o julgamento independente de [VISUAL-REVIEW.md](VISUAL-REVIEW.md).
+
 - [ ] **Alinhamento:** elementos compartilham eixos; nada desalinhado por poucos pixels.
 - [ ] **Espaçamento:** ritmo consistente com a escala de tokens; seções nem apertadas nem soltas demais.
 - [ ] **Hierarquia:** o foco de cada tela é óbvio em 3 segundos; CTA primário inconfundível.
@@ -140,4 +148,4 @@ Capture, no mínimo, home e páginas-chave em 375, 768, 1440 e 1920 px, e estado
 - [ ] **Originalidade:** o resultado não é reconhecível como cópia de nenhuma referência.
 
 ### Registro
-Liste os problemas encontrados por prioridade (bloqueador, alto, médio, polimento), com página, viewport e descrição. Corrija na fase 10 e recapture para confirmar.
+Liste os problemas encontrados por prioridade (bloqueador, alto, médio, polimento), com página, viewport e descrição. Corrija na fase 10 e recapture para confirmar. Depois, siga para o ciclo de críticos independentes ([VISUAL-REVIEW.md](VISUAL-REVIEW.md)) e registre os vereditos na seção "Ciclo visual" do `qa-report.md`.

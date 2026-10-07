@@ -63,13 +63,13 @@ Detalhes de cada fase e seus critérios de saída: [WORKFLOW.md](WORKFLOW.md).
 1. **Discovery** — perguntas agrupadas e objetivas → [DISCOVERY.md](DISCOVERY.md)
 2. **Repository Audit** — se houver código, estudar antes de editar → [REPOSITORY-AUDIT.md](REPOSITORY-AUDIT.md)
 3. **Research** — referências reais via Firecrawl → [FIRECRAWL-RESEARCH.md](FIRECRAWL-RESEARCH.md)
-4. **Reference Analysis** — nota em todos os aspectos, top 3 com URL para o usuário escolher a referência principal, síntese de padrões sem copiar → [FIRECRAWL-RESEARCH.md](FIRECRAWL-RESEARCH.md)
+4. **Reference Analysis** — nota em todos os aspectos, top 3 com URL para o usuário escolher a referência principal, síntese de padrões sem copiar e barra de qualidade (5–7 mecanismos observáveis da referência principal) → [FIRECRAWL-RESEARCH.md](FIRECRAWL-RESEARCH.md)
 5. **Design Direction** — conceito, tipografia, cores, grid, motion → [DESIGN.md](DESIGN.md)
 6. **Architecture** — páginas, rotas, componentes, dados, integrações → [ENGINEERING.md](ENGINEERING.md)
 7. **Implementation** — pequenas etapas, projeto sempre funcional → [ENGINEERING.md](ENGINEERING.md)
 8. **QA** — build, lint, tipos, a11y, SEO, performance → [QA-CHECKLIST.md](QA-CHECKLIST.md), [ACCESSIBILITY.md](ACCESSIBILITY.md), [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md)
-9. **Visual Review** — inspeção visual em vários viewports → [QA-CHECKLIST.md](QA-CHECKLIST.md)
-10. **Refinement** — corrigir o que foi encontrado e revalidar
+9. **Visual Review** — autoverificação em vários viewports e ciclo de três críticos independentes (briefing, sistema, visual às cegas contra a referência) → [QA-CHECKLIST.md](QA-CHECKLIST.md), [VISUAL-REVIEW.md](VISUAL-REVIEW.md)
+10. **Refinement** — corrigir o que foi encontrado e revalidar, até as auditorias zerarem e os três críticos aprovarem
 11. **Delivery** — relatório objetivo → [references/templates.md](references/templates.md)
 
 ### Pontos de aprovação obrigatórios (gates)
@@ -78,7 +78,7 @@ Pare e aguarde a resposta do usuário:
 
 - **G1** — após o discovery: confirmar briefing, stack e escopo.
 - **G2** — após a avaliação das referências (fase 4): apresentar as 3 melhores, com nota e URL, e o usuário escolhe qual será a referência principal. Se o usuário forneceu uma única referência, ela já é a principal: apresente a análise e confirme.
-- **G3** — após a direção visual (fase 5): aprovar antes de qualquer implementação grande.
+- **G3** — após a direção visual (fase 5): aprovar a direção e a barra de qualidade antes de qualquer implementação grande.
 - **G4** — após a arquitetura, quando houver mudança estrutural relevante, nova dependência significativa ou reescrita de áreas existentes.
 - Sempre que surgir uma decisão importante de produto, stack, identidade ou arquitetura que não estava prevista.
 
@@ -93,6 +93,7 @@ Pare e aguarde a resposta do usuário:
 - **Evite a estética genérica de IA** (lista completa em [DESIGN.md](DESIGN.md#anti-padrões-de-site-gerado-por-ia)).
 - **Teste antes de declarar conclusão.** Nunca afirme que algo foi validado se não foi; diga exatamente o que foi e o que não foi testado.
 - **Corrija até zerar.** Todo item reprovado pelas auditorias (`build-audit.py`, `perf-audit.py`, `seo-audit.py`) volta ao ciclo corrigir → build → auditar e sobe a escada de soluções até sair **resolvido**, por **decisão do usuário** (tomada com as opções e o custo de cada uma na frente) ou **fora do controle do projeto** (com evidência). "Pendente" ou "aceito" sem um desses estados não é entrega ([SEO-PERFORMANCE.md](SEO-PERFORMANCE.md#escada-de-soluções)).
+- **Quem construiu não aprova o visual.** A qualidade visual é julgada por três críticos com contexto novo (subagentes que veem só as capturas, nunca o código), com veredito APROVADO ou REPROVADO e uma lacuna por reprovação, até os três aprovarem ou o usuário interromper. Teto de rodadas atingido não vira aprovação ([VISUAL-REVIEW.md](VISUAL-REVIEW.md)).
 - **URL pública final antes do build de entrega.** Canonical, `og:image` e sitemap precisam dela; sem ela, a prévia de compartilhamento sai sem imagem.
 
 ## Segurança (resumo — detalhes em [SECURITY.md](SECURITY.md))
@@ -108,10 +109,10 @@ Pare e aguarde a resposta do usuário:
 Registre decisões em `docs/website/` dentro do projeto (pergunte antes de criar em repositórios existentes que já tenham convenção de documentação):
 
 - `briefing.md` — resultado do discovery
-- `research.md` — referências e síntese de padrões
+- `research.md` — referências, síntese de padrões e barra de qualidade
 - `design-direction.md` — direção visual aprovada
 - `architecture.md` — plano técnico
-- `qa-report.md` — resultados do QA
+- `qa-report.md` — resultados do QA e do ciclo visual
 
 Arquivos temporários (screenshots, relatórios brutos, scripts de apoio) vão em `tmp/` na raiz do projeto, com `tmp/` adicionado ao `.gitignore`.
 
@@ -128,6 +129,7 @@ Arquivos temporários (screenshots, relatórios brutos, scripts de apoio) vão e
 | [ACCESSIBILITY.md](ACCESSIBILITY.md) | WCAG 2.2 AA aplicado |
 | [SEO-PERFORMANCE.md](SEO-PERFORMANCE.md) | SEO técnico e Core Web Vitals |
 | [QA-CHECKLIST.md](QA-CHECKLIST.md) | Checklist de QA e revisão visual |
+| [VISUAL-REVIEW.md](VISUAL-REVIEW.md) | Ciclo de críticos independentes: evidências, comparação às cegas, vereditos, rodadas |
 | [SECURITY.md](SECURITY.md) | Regras de segurança e prompt injection |
 | [references/niche-profiles.md](references/niche-profiles.md) | Método para derivar o perfil de qualquer nicho + exemplos ilustrativos |
 | [references/stack-options.md](references/stack-options.md) | Opções de stack e trade-offs |

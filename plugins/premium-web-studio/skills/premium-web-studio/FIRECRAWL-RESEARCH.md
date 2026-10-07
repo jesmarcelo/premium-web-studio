@@ -191,6 +191,33 @@ Com a referência principal escolhida, apresente ao usuário e salve em `docs/we
 3. **Armadilhas** — o que é comum, mas prejudica (clichês, excesso de efeitos, baixa legibilidade).
 4. **Oportunidades de diferenciação** — onde o projeto pode se destacar de forma original.
 5. **Implicações para a direção visual** — 4–8 princípios que vão orientar a fase 5, destacando quais vêm da referência principal e quais vêm das demais.
+6. **Barra de qualidade** — 5 a 7 mecanismos observáveis extraídos da referência principal ([seção 5.4](#54-barra-de-qualidade-mecanismos-observáveis)).
+
+### 5.4 Barra de qualidade (mecanismos observáveis)
+
+"A referência define o nível de qualidade" só vale se esse nível puder ser conferido depois. A barra transforma a referência principal em **5 a 7 mecanismos** que qualquer pessoa verifica olhando o resultado renderizado, sem ler o código. Ela é o critério do crítico visual na fase 9 ([VISUAL-REVIEW.md](VISUAL-REVIEW.md)).
+
+**Mecanismos, não adjetivos.** "Parece premium" não diz o que construir nem permite reprovar. Procure as relações que explicam o efeito: escala, contraste, densidade, ritmo, continuidade, comportamento.
+
+| Observação vaga | Mecanismo possível, se observado na referência |
+|---|---|
+| Hierarquia clara | O título domina a primeira tela, o texto de apoio é claramente subordinado e há uma única ação principal visível. |
+| Sofisticação | Uma cor de destaque, restrita às ações; todo o resto em neutros. |
+| Ritmo editorial | Seções alternam densidade (bloco denso → respiro amplo) e nenhuma duas seções seguidas repetem a mesma composição. |
+| Acabamento | Todos os blocos compartilham as mesmas margens laterais e eixos; nada desalinha entre seções. |
+| Scroll expressivo | Elementos entram em planos com velocidades diferentes e a transição liga duas seções, sem esconder conteúdo. |
+| Mobile cuidadoso | No mobile, a hierarquia da primeira tela se mantém e o CTA principal aparece sem rolar. |
+
+Regras:
+- **Extraia da referência, não de regras genéricas.** Os exemplos acima são ilustrativos. Não imponha "uma cor", "dois pesos" ou "400 ms" a uma referência que não funciona assim.
+- **Examine o site pelo que ele faz:** percorra a página, role, passe o mouse e veja o mobile. Mecanismos de movimento e continuidade só aparecem interagindo.
+- **Dimensões diferentes:** cubra escala/hierarquia, composição/ritmo, cor, tipografia, acabamento e, se a referência usar, movimento. Sete mecanismos de tipografia não formam uma barra.
+- **Verificável:** cada linha diz o efeito observável e em qual página, estado ou viewport ele é conferido. Números exatos só quando puderem ser medidos; não invente durações, proporções ou curvas.
+- **Qualidade, não identidade:** o mecanismo descreve *como* a referência alcança o efeito, nunca *o que* ela mostra (logo, paleta proprietária, layout distintivo, textos). A barra não autoriza cópia (seção 6).
+- **A barra não substitui o briefing:** requisitos do pedido e convenções do nicho prevalecem sobre a estética da referência.
+- **Barra estável:** depois de aprovada no G3, não reescreva a barra para facilitar uma aprovação. Mudança real de referência ou de escopo é decisão do usuário e fica registrada com data.
+
+Em projetos existentes que já tenham um documento de critérios de qualidade com esse papel, reutilize-o: mantenha uma única barra vigente.
 
 ## 6. Regras de não cópia
 

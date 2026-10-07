@@ -6,6 +6,21 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [1.1.0] - 2026-10-07
+
+### Adicionado
+
+- Barra de qualidade: depois da escolha da referência principal (G2), 5 a 7 mecanismos observáveis extraídos dela, verificáveis só olhando o resultado, com exemplos de como transformar adjetivos em mecanismos. É aprovada no G3 com a direção visual e não pode ser reescrita para facilitar uma aprovação.
+- `VISUAL-REVIEW.md`: ciclo de três críticos independentes na revisão visual. Briefing, sistema e visual são subagentes com contexto novo que julgam só as capturas, nunca o código. O crítico visual compara o resultado e a referência às cegas (rótulos A/B, mapa fora da pasta de avaliação) e também reprova cópia; placeholders declarados não contam contra. Vereditos APROVADO/REPROVADO, sem notas, e uma única lacuna por reprovação. O ciclo segue até os três aprovarem todas as partes ou o usuário interromper; teto de rodadas definido pelo usuário é ponto de parada e não vira aprovação.
+- Pré-verificação antes do ciclo visual: referência acessível, renderização do resultado, subagentes disponíveis e documentos de cada crítico, dizendo qual crítico fica sem condições de julgar.
+- Cuidados de captura: por viewport quando houver elementos fixos, sticky, canvas ou vídeo; tira de frames ou capturas sequenciais para animações; comparação só entre larguras e estados equivalentes.
+- Modelos da barra de qualidade em `research.md`, da seção "Ciclo visual" do `qa-report.md` e das instruções de cada crítico.
+
+### Alterado
+
+- Fase 9: o checklist de diretor de arte passa a ser a autoverificação antes dos críticos. Fase 10 só termina com as auditorias zeradas e os três críticos aprovando, ou com o ciclo interrompido pelo usuário e registrado. O relatório de entrega informa rodadas, partes aprovadas e o que ainda reprova.
+- Método do ciclo visual inspirado no [Gauntlet Loop](https://somethingbig.ai/gauntlet-loop), de Matt Shumer, e na skill [loop-de-design](https://github.com/Felpborges/loop-de-design), de Felipe Borges.
+
 ## [1.0.4] - 2026-10-05
 
 ### Adicionado
@@ -76,7 +91,8 @@ Primeira versão pública.
 - Comando `/premium-web-studio update` para verificar e aplicar atualizações a partir do GitHub.
 - Instalação pelo marketplace do Claude Code ou manualmente como Skill.
 
-[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.4...HEAD
+[Não lançado]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/jesmarcelo/premium-web-studio/compare/v1.0.1...v1.0.2

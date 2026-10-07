@@ -8,13 +8,13 @@ Consulte [references/niche-profiles.md](references/niche-profiles.md) para o per
 
 ## 1. Processo
 
-1. **Revise as entradas:** briefing, referência principal escolhida pelo usuário (gate G2), síntese da pesquisa, identidade existente, perfil do nicho. A referência principal define o nível de qualidade e a direção (sofisticação, densidade, tom, tipo de composição); a solução continua original. Explique na proposta o que foi inspirado nela e o que é próprio do projeto.
+1. **Revise as entradas:** briefing, referência principal escolhida pelo usuário (gate G2), síntese da pesquisa, barra de qualidade ([FIRECRAWL-RESEARCH.md](FIRECRAWL-RESEARCH.md#54-barra-de-qualidade-mecanismos-observáveis)), identidade existente, perfil do nicho. A referência principal define o nível de qualidade e a direção (sofisticação, densidade, tom, tipo de composição); a solução continua original. Explique na proposta o que foi inspirado nela e o que é próprio do projeto.
 2. **Defina o conceito:** uma ideia central em uma frase que guie todas as decisões. Ex.: "Precisão silenciosa — a autoridade vem do rigor, não do volume." Evite conceitos vagos como "moderno e clean".
 3. **Defina 3–5 atributos de marca** e os traduza em decisões visuais (ex.: "confiável" → paleta contida, tipografia serifada de texto, alinhamentos rígidos, ausência de motion chamativo).
 4. **Escolha a linguagem visual:** tipografia, cor, grid, espaçamento, forma, imagem, iconografia, motion.
 5. **Formalize em tokens** (seção 8).
 6. **Desenhe a estrutura das páginas principais** em texto (ordem das seções e propósito de cada uma) antes de codificar.
-7. **Apresente ao usuário** (gate G3). Quando a direção não for óbvia, ofereça 2 direções contrastantes, cada uma com conceito, paleta, pares tipográficos e nível de motion, e uma recomendação.
+7. **Apresente ao usuário** (gate G3), junto com a barra de qualidade e como a direção atende cada mecanismo dela. Quando a direção não for óbvia, ofereça 2 direções contrastantes, cada uma com conceito, paleta, pares tipográficos e nível de motion, e uma recomendação.
 
 ## 2. Hierarquia
 

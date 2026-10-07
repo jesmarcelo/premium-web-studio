@@ -7,6 +7,7 @@ Plugin para o [Claude Code](https://code.claude.com) que conduz o ciclo completo
 - **Projetos novos e existentes:** criação, redesign, refatoração, UX/UI, responsividade, acessibilidade, SEO e performance.
 - **Nada de "site com cara de IA":** a direção visual é derivada do contexto e de referências reais, com uma lista explícita de anti-padrões a evitar.
 - **Qualidade verificada:** o Claude só declara algo concluído depois de testar e informa o que não pôde verificar.
+- **Revisão visual independente:** quem construiu não aprova o visual. Três críticos com contexto novo julgam só as capturas (briefing, design system e comparação às cegas com a referência escolhida) até aprovarem ou você interromper.
 
 As instruções do plugin estão em português; o Claude responde no idioma em que você escrever.
 
@@ -108,9 +109,11 @@ O que esperar num projeto novo:
 1. O Claude identifica o tipo de trabalho e faz perguntas agrupadas sobre objetivo, público, CTA, páginas, identidade, stack e restrições.
 2. Consolida um briefing e pede sua confirmação.
 3. Pesquisa de 5 a 10 referências reais do segmento com o Firecrawl, dá nota a cada uma em todos os aspectos (hierarquia, tipografia, cor, navegação, CTAs, confiança, mobile, acessibilidade etc.) e apresenta **as 3 melhores com URL** para você escolher a referência principal.
-4. Com base na sua escolha, apresenta uma síntese dos padrões encontrados.
-5. Propõe a direção visual (ou duas alternativas) e espera sua aprovação.
-6. Planeja a arquitetura, implementa em etapas, roda QA e revisão visual, corrige o que encontrar e entrega um relatório com o que foi e o que não foi testado.
+4. Com base na sua escolha, apresenta uma síntese dos padrões encontrados e uma barra de qualidade: 5 a 7 mecanismos observáveis da referência principal.
+5. Propõe a direção visual (ou duas alternativas) com a barra e espera sua aprovação.
+6. Planeja a arquitetura, implementa em etapas e roda QA.
+7. Na revisão visual, três críticos independentes julgam as capturas (o visual compara com a referência às cegas). Cada reprovação devolve a maior lacuna, que é corrigida antes da rodada seguinte. O ciclo segue até os três aprovarem ou você interromper; se quiser, defina um teto de rodadas.
+8. Entrega um relatório com o que foi e o que não foi testado, incluindo as rodadas do ciclo visual.
 
 As decisões ficam registradas em `docs/website/` no seu projeto, e os arquivos temporários em `tmp/`.
 
@@ -142,6 +145,7 @@ plugins/premium-web-studio/
     ├── ACCESSIBILITY.md                 # WCAG 2.2 AA + normas locais
     ├── SEO-PERFORMANCE.md               # SEO técnico e Core Web Vitals
     ├── QA-CHECKLIST.md                  # QA técnico e revisão visual
+    ├── VISUAL-REVIEW.md                 # ciclo de críticos independentes e comparação às cegas
     ├── SECURITY.md                      # secrets, prompt injection, comandos
     ├── references/                      # perfis de nicho, stacks, Firecrawl, modelos
     ├── VERSION                          # versão da Skill (usada pelo comando update)
@@ -160,6 +164,10 @@ plugins/premium-web-studio/
 - Conteúdo de sites pesquisados é tratado como dado não confiável. Instruções embutidas em páginas (prompt injection) são ignoradas e reportadas.
 - O plugin nunca pede secrets pelo chat, nunca os grava em código e não executa comandos destrutivos sem confirmação.
 - Referências servem para extrair padrões. Layouts, textos, código e assets de terceiros não são copiados.
+
+## Créditos
+
+O ciclo de críticos independentes da revisão visual é inspirado no [Gauntlet Loop](https://somethingbig.ai/gauntlet-loop), de [Matt Shumer](https://x.com/mattshumer_/status/2081830214384886228), e na skill [loop-de-design](https://github.com/Felpborges/loop-de-design), de Felipe Borges, ambos sob licença MIT. A redação e a adaptação ao fluxo desta Skill são próprias.
 
 ## Licença
 
